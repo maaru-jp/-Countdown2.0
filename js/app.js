@@ -161,8 +161,9 @@
         }).join('') + '</div>';
       }
 
+      var countdownTarget = p.countdownTo || (p.endDate ? p.endDate + 'T23:59:59' : null);
       let countdownHtml = '';
-      const cd = getCountdown(p.countdownTo);
+      const cd = getCountdown(countdownTarget);
       if (cd && !cd.done) {
         countdownHtml = '<div class="countdown">倒數：<span>' + cd.text + '</span></div>';
       } else if (cd && cd.done) {
@@ -247,8 +248,9 @@
       if (!card) return;
       const id = card.dataset.id;
       const p = allProducts.find(function (x) { return String(x.id) === id; });
-      if (!p || !p.countdownTo) return;
-      const cd = getCountdown(p.countdownTo);
+      var countdownTarget = p ? (p.countdownTo || (p.endDate ? p.endDate + 'T23:59:59' : null)) : null;
+      if (!p || !countdownTarget) return;
+      const cd = getCountdown(countdownTarget);
       if (!cd) return;
       if (cd.done) {
         div.innerHTML = '已到期';
