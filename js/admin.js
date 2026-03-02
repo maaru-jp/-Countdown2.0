@@ -123,27 +123,38 @@
     }
     url = url.trim().replace(/\/$/, '');
     setSubmitLoading(true);
-    var form = document.createElement('form');
-    form.method = 'POST';
-    form.action = url;
-    form.target = '_blank';
-    form.style.display = 'none';
-    form.enctype = 'application/x-www-form-urlencoded';
-    addField(form, 'action', 'append');
-    addField(form, 'title', payload.title);
-    addField(form, 'imageUrl', payload.imageUrl);
-    addField(form, 'badge', payload.badge);
-    addField(form, 'startDate', payload.startDate);
-    addField(form, 'endDate', payload.endDate);
-    addField(form, 'registeredCount', payload.registeredCount != null ? String(payload.registeredCount) : '');
-    addField(form, 'status', payload.status);
-    addField(form, 'progress', JSON.stringify(payload.progress || []));
-    addField(form, 'countdownTo', payload.countdownTo);
-    document.body.appendChild(form);
-    form.submit();
-    document.body.removeChild(form);
-    setSubmitLoading(false);
-    if (onDone) onDone(null);
+    var params = new URLSearchParams();
+    params.append('action', 'append');
+    params.append('title', payload.title || '');
+    params.append('imageUrl', payload.imageUrl || '');
+    params.append('badge', payload.badge || 'hot');
+    params.append('startDate', payload.startDate || '');
+    params.append('endDate', payload.endDate || '');
+    params.append('registeredCount', payload.registeredCount != null ? String(payload.registeredCount) : '');
+    params.append('status', payload.status || 'ongoing');
+    params.append('progress', JSON.stringify(payload.progress || []));
+    params.append('countdownTo', payload.countdownTo || '');
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        setSubmitLoading(false);
+        if (result && result.ok) {
+          showMessage(result.message || '已寫入試算表「' + (result.sheetName || '') + '」，目前共 ' + (result.rows || 0) + ' 列。', 'success');
+          if (onDone) onDone(null);
+        } else {
+          showMessage((result && result.error) ? result.error : '寫入試算表時發生錯誤。', 'error');
+          if (onDone) onDone(new Error(result && result.error ? result.error : 'unknown'));
+        }
+      })
+      .catch(function (err) {
+        setSubmitLoading(false);
+        showMessage('無法連線至 Apps Script：' + (err && err.message ? err.message : '請檢查網址與網路').toString(), 'error');
+        if (onDone) onDone(err);
+      });
   }
 
   document.getElementById('groupForm').addEventListener('submit', function (e) {
@@ -158,14 +169,8 @@
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
     if (url && url.trim()) {
       setScriptUrl(url.trim());
-      submitToSheet(payload, function (err) {
-        addToLocal(payload);
-        if (err) {
-          showMessage('已儲存至本機，但匯入試算表時發生錯誤。', 'error');
-        } else {
-          showMessage('已送出並儲存至本機。請看「新開分頁」：若顯示 {"ok":true} 表示試算表已寫入；若有 error 請依訊息檢查 Apps Script 與試算表 ID。', 'success');
-        }
-      });
+      addToLocal(payload);
+      submitToSheet(payload, function () {});
     } else {
       addToLocal(payload);
       showMessage('已儲存至本機。若需匯入試算表，請先填寫下方 Apps Script 網址後再送出。', 'success');
@@ -192,6 +197,18 @@
     });
     scriptInput.addEventListener('blur', function () {
       setScriptUrl(this.value.trim());
+    });
+  }
+  var testBtn = document.getElementById('testScriptBtn');
+  if (testBtn) {
+    testBtn.addEventListener('click', function () {
+      var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
+      if (!url || !url.trim()) {
+        showMessage('請先填寫 Apps Script 網址', 'error');
+        return;
+      }
+      url = url.trim().replace(/\/$/, '') + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=test';
+      window.open(url, '_blank');
     });
   }
 

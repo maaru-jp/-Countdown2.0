@@ -104,24 +104,28 @@
 
   function formatDate(str) {
     if (!str) return '—';
-    const d = new Date(str + 'T00:00:00');
-    if (isNaN(d.getTime())) return str;
+    var s = String(str).trim();
+    var d = s.indexOf('T') >= 0 ? new Date(s) : new Date(s + 'T00:00:00');
+    if (isNaN(d.getTime())) return '—';
     return d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0');
   }
 
   function getCountdown(toIso) {
     if (!toIso) return null;
     const to = new Date(toIso);
+    if (isNaN(to.getTime())) return null;
     const now = new Date();
     const diff = to - now;
     if (diff <= 0) return { text: '已到期', done: true };
     const days = Math.floor(diff / (24 * 60 * 60 * 1000));
     const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
     const mins = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+    const secs = Math.floor((diff % (60 * 1000)) / 1000);
     const parts = [];
     if (days) parts.push(days + ' 天');
     parts.push(String(hours).padStart(2, '0') + ' 時');
     parts.push(String(mins).padStart(2, '0') + ' 分');
+    parts.push(String(secs).padStart(2, '0') + ' 秒');
     return { text: parts.join(' '), done: false };
   }
 
@@ -236,14 +240,22 @@
   }
 
   function tickCountdown() {
-    document.querySelectorAll('.countdown span').forEach(function (el) {
-      const card = el.closest('.product-card');
+    document.querySelectorAll('.countdown').forEach(function (div) {
+      const span = div.querySelector('span');
+      if (!span) return;
+      const card = div.closest('.product-card');
       if (!card) return;
       const id = card.dataset.id;
       const p = allProducts.find(function (x) { return String(x.id) === id; });
       if (!p || !p.countdownTo) return;
       const cd = getCountdown(p.countdownTo);
-      if (cd) el.textContent = cd.text;
+      if (!cd) return;
+      if (cd.done) {
+        div.innerHTML = '已到期';
+        div.classList.add('countdown-done');
+        return;
+      }
+      span.textContent = cd.text;
     });
   }
 
@@ -290,7 +302,8 @@
     bindTheme();
     maybeFetchFromSheet(function () {
       renderCards();
-      setInterval(tickCountdown, 60000);
+      tickCountdown();
+      setInterval(tickCountdown, 1000);
     });
   }
 
