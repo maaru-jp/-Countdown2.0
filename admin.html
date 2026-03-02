@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <base href="./" />
+  <base href="https://maaru-jp.github.io/-Countdown2.0/" />
   <title>開團管理後台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -99,7 +99,8 @@
       <p>若要自動匯入 Google 試算表，請先部署 Google Apps Script，並將「網路應用程式網址」貼在下方。</p>
       <label for="scriptUrl">Apps Script 網址</label>
       <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/xxxxx/exec" />
-      <p class="hint">部署步驟請見專案中的 <code>GoogleAppsScript.md</code></p>
+      <button type="button" class="btn btn-secondary" id="testScriptBtn" style="margin-top:0.5rem;">測試連線（開新分頁）</button>
+      <p class="hint">部署步驟請見專案中的 <code>GoogleAppsScript.md</code>。先按「測試連線」確認網址與試算表正常。</p>
     </div>
 
     <div class="message" id="message" role="status" aria-live="polite"></div>
