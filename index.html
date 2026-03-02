@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>開團進度追蹤</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Outfit:wght@300;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="theme-bg" aria-hidden="true"></div>
+
+  <header class="header">
+    <div class="theme-switcher" role="group" aria-label="切換背景主題">
+      <button type="button" class="theme-btn active" data-theme="dawn" aria-pressed="true">奶藍</button>
+      <button type="button" class="theme-btn" data-theme="night" aria-pressed="false">星空</button>
+      <button type="button" class="theme-btn" data-theme="sakura" aria-pressed="false">櫻花</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="hero">
+      <div class="logo-glass">
+        <div class="logo-shine" aria-hidden="true"></div>
+        <img src="logo.png" alt="品牌 Logo" class="https://res.cloudinary.com/dtll13zax/image/upload/v1772375369/%E5%93%81%E7%89%8Clogo_eheujn.jpg" />
+      </div>
+    </div>
+
+    <nav class="tabs" role="tablist">
+      <button type="button" class="tab active" role="tab" aria-selected="true" data-filter="upcoming">即將開團</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-filter="ongoing">正在開團</button>
+      <button type="button" class="tab" role="tab" aria-selected="false" data-filter="ended">已結團</button>
+    </nav>
+
+    <section class="cards-section" role="tabpanel">
+      <div class="cards-grid" id="cardsGrid">
+        <!-- 商品卡由 JS 動態插入 -->
+      </div>
+      <p class="empty-state" id="emptyState" hidden>此分類暫無商品</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
