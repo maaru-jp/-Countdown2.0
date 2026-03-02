@@ -107,36 +107,43 @@
     }
   }
 
+  function addField(form, name, value) {
+    var input = document.createElement('input');
+    input.name = name;
+    input.type = 'hidden';
+    input.value = value == null ? '' : value;
+    form.appendChild(input);
+  }
+
   function submitToSheet(payload, onDone) {
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
     if (!url || !url.trim()) {
       if (onDone) onDone(new Error('請先填寫 Google Apps Script 網址'));
       return;
     }
+    url = url.trim().replace(/\/$/, '');
     setSubmitLoading(true);
-    var body = JSON.stringify({ action: 'append', row: payload });
-    var iframe = document.createElement('iframe');
-    iframe.name = 'sheet-post-frame';
-    iframe.style.cssText = 'position:absolute;width:0;height:0;border:0;';
-    document.body.appendChild(iframe);
     var form = document.createElement('form');
     form.method = 'POST';
     form.action = url;
-    form.target = 'sheet-post-frame';
+    form.target = '_blank';
     form.style.display = 'none';
-    var input = document.createElement('input');
-    input.name = 'payload';
-    input.type = 'hidden';
-    input.value = body;
-    form.appendChild(input);
+    form.enctype = 'application/x-www-form-urlencoded';
+    addField(form, 'action', 'append');
+    addField(form, 'title', payload.title);
+    addField(form, 'imageUrl', payload.imageUrl);
+    addField(form, 'badge', payload.badge);
+    addField(form, 'startDate', payload.startDate);
+    addField(form, 'endDate', payload.endDate);
+    addField(form, 'registeredCount', payload.registeredCount != null ? String(payload.registeredCount) : '');
+    addField(form, 'status', payload.status);
+    addField(form, 'progress', JSON.stringify(payload.progress || []));
+    addField(form, 'countdownTo', payload.countdownTo);
     document.body.appendChild(form);
     form.submit();
-    setTimeout(function () {
-      document.body.removeChild(form);
-      document.body.removeChild(iframe);
-      setSubmitLoading(false);
-      if (onDone) onDone(null);
-    }, 1500);
+    document.body.removeChild(form);
+    setSubmitLoading(false);
+    if (onDone) onDone(null);
   }
 
   document.getElementById('groupForm').addEventListener('submit', function (e) {
@@ -154,9 +161,9 @@
       submitToSheet(payload, function (err) {
         addToLocal(payload);
         if (err) {
-          showMessage('已儲存至本機，但匯入試算表時發生錯誤（可能需檢查 CORS 或改為用 doPost 接收）。', 'error');
+          showMessage('已儲存至本機，但匯入試算表時發生錯誤。', 'error');
         } else {
-          showMessage('已匯入 Google 試算表並更新本機資料，可至展示頁查看。', 'success');
+          showMessage('已送出並儲存至本機。請看「新開分頁」：若顯示 {"ok":true} 表示試算表已寫入；若有 error 請依訊息檢查 Apps Script 與試算表 ID。', 'success');
         }
       });
     } else {
@@ -185,6 +192,18 @@
     });
     scriptInput.addEventListener('blur', function () {
       setScriptUrl(this.value.trim());
+    });
+  }
+  var testBtn = document.getElementById('testScriptBtn');
+  if (testBtn) {
+    testBtn.addEventListener('click', function () {
+      var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
+      if (!url || !url.trim()) {
+        showMessage('請先填寫 Apps Script 網址', 'error');
+        return;
+      }
+      url = url.trim().replace(/\/$/, '') + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=test';
+      window.open(url, '_blank');
     });
   }
 
