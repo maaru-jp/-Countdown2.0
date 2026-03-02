@@ -261,12 +261,15 @@
     });
   }
 
-  // 從 Google Apps Script 讀取（可選）：管理頁設定的網址會存於 localStorage
+  // 從 Google Apps Script 讀取：優先 localStorage / 全域變數，否則使用預設網址
+  var DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMsCxagnkHf6TbS5PzLJ-PpxyJY32eeDLTkX_vdDmCDeJ8OdUE2DxWyh4w2yquj7v3/exec';
   function getScriptUrl() {
     if (typeof window.GOOGLE_SCRIPT_URL === 'string' && window.GOOGLE_SCRIPT_URL) return window.GOOGLE_SCRIPT_URL;
     try {
-      return localStorage.getItem('googleScriptUrl') || '';
-    } catch (_) { return ''; }
+      var saved = localStorage.getItem('googleScriptUrl');
+      if (saved && saved.trim()) return saved.trim();
+    } catch (_) {}
+    return DEFAULT_SCRIPT_URL || '';
   }
   function maybeFetchFromSheet(cb) {
     var url = getScriptUrl();

@@ -3,13 +3,14 @@
 
   const STORAGE_KEY = 'groupBuyData';
   const SCRIPT_URL_KEY = 'googleScriptUrl'; // 與展示頁共用，供從試算表讀取列表（選用）
+  var DEFAULT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwMsCxagnkHf6TbS5PzLJ-PpxyJY32eeDLTkX_vdDmCDeJ8OdUE2DxWyh4w2yquj7v3/exec';
 
   function getScriptUrl() {
     try {
-      return localStorage.getItem(SCRIPT_URL_KEY) || '';
-    } catch (_) {
-      return '';
-    }
+      var saved = localStorage.getItem(SCRIPT_URL_KEY);
+      if (saved && saved.trim()) return saved.trim();
+    } catch (_) {}
+    return DEFAULT_SCRIPT_URL || '';
   }
 
   function setScriptUrl(url) {
