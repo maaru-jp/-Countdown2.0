@@ -5,7 +5,13 @@ const SPREADSHEET_ID = '你的試算表ID';
 
 function doPost(e) {
   try {
-    var params = e.postData ? JSON.parse(e.postData.contents) : {};
+    var raw = null;
+    if (e.parameter && e.parameter.payload) {
+      raw = e.parameter.payload;
+    } else if (e.postData && e.postData.contents) {
+      raw = e.postData.contents;
+    }
+    var params = raw ? JSON.parse(raw) : {};
     if (params.action === 'append' && params.row) {
       var row = params.row;
       var progressStr = JSON.stringify(row.progress || []);
