@@ -1,0 +1,10 @@
+# 若不想將品牌 logo 一併公開，可取消下行註解
+# logo.png
+
+# 系統與編輯器
+.DS_Store
+Thumbs.db
+*.log
+*.swp
+.vscode/
+.idea/
