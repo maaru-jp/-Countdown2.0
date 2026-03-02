@@ -25,7 +25,15 @@
 
 ## 檔案結構
 
-- `index.html` / `styles.css` / `app.js`：展示頁
-- `admin.html` / `admin.css` / `admin.js`：管理頁
+- `index.html`、`css/styles.css`、`js/app.js`：展示頁
+- `admin.html`、`css/admin.css`、`js/admin.js`：管理頁
 - `Code.gs`：供複製到 Apps Script 的程式碼
 - `GoogleAppsScript.md`：試算表與部署步驟說明
+
+## 部署到 GitHub / GitHub Pages
+
+1. 確認 repo 裡有 **css** 和 **js** 兩個資料夾，且裡面有檔案：
+   - `css/styles.css`、`css/admin.css`
+   - `js/app.js`、`js/admin.js`
+2. HTML 已加上 `<base href="./" />`，在 GitHub Pages 子路徑下會正確載入 CSS 與 JS。
+3. 請用 **GitHub Pages 網址**開啟（例如 `https://你的帳號.github.io/你的repo名稱/`），不要用 `raw.githubusercontent.com` 或直接點開單一 HTML 檔。
