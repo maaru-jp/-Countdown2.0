@@ -1,0 +1,457 @@
+/* ========== 變數與主題 ========== */
+:root {
+  --font-sans: 'Outfit', 'Noto Sans TC', sans-serif;
+  --font-display: 'Outfit', 'Noto Sans TC', sans-serif;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 奶藍主題 (預設) */
+[data-theme="dawn"] {
+  --bg-gradient: linear-gradient(160deg, #f0f7fc 0%, #e4eff8 35%, #d8e8f4 70%, #cde0f0 100%);
+  --glass-bg: rgba(232, 244, 252, 0.6);
+  --glass-border: rgba(180, 215, 238, 0.55);
+  --card-bg: rgba(255, 253, 252, 0.9);
+  --card-border: rgba(200, 225, 245, 0.75);
+  --text: #1e3a52;
+  --text-muted: #4a6b85;
+  --accent: #3b82c4;
+  --accent-soft: rgba(59, 130, 196, 0.18);
+  --tab-active: #2563ab;
+  --shine: rgba(255, 255, 255, 0.75);
+}
+
+/* 星空主題 */
+[data-theme="night"] {
+  --bg-gradient: linear-gradient(160deg, #0f0c1a 0%, #1a1535 50%, #0d0a14 100%);
+  --glass-bg: rgba(30, 25, 55, 0.6);
+  --glass-border: rgba(120, 100, 200, 0.35);
+  --card-bg: rgba(25, 22, 45, 0.88);
+  --card-border: rgba(100, 80, 180, 0.4);
+  --text: #e8e4f5;
+  --text-muted: #9a8fc9;
+  --accent: #a78bfa;
+  --accent-soft: rgba(167, 139, 250, 0.25);
+  --tab-active: #c4b5fd;
+  --shine: rgba(255, 255, 255, 0.25);
+}
+
+/* 櫻花主題 */
+[data-theme="sakura"] {
+  --bg-gradient: linear-gradient(160deg, #fef2f5 0%, #fce7ef 40%, #f8d5e4 70%, #f2c4d9 100%);
+  --glass-bg: rgba(255, 240, 248, 0.6);
+  --glass-border: rgba(230, 180, 210, 0.5);
+  --card-bg: rgba(255, 252, 253, 0.92);
+  --card-border: rgba(235, 200, 220, 0.75);
+  --text: #4a2c3a;
+  --text-muted: #8b5a6b;
+  --accent: #c44d7a;
+  --accent-soft: rgba(196, 77, 122, 0.18);
+  --tab-active: #a63d65;
+  --shine: rgba(255, 255, 255, 0.7);
+}
+
+/* ========== 基礎 ========== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg-gradient);
+  transition: background var(--transition), color var(--transition);
+  overflow-x: hidden;
+}
+
+.theme-bg {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-gradient);
+  z-index: -1;
+  transition: background var(--transition);
+}
+
+/* ========== 頂部 ========== */
+.header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.admin-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition), background var(--transition);
+}
+.admin-link:hover {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.theme-switcher {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+}
+
+.theme-btn {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), transform 0.2s ease;
+}
+.theme-btn:hover {
+  color: var(--text);
+}
+.theme-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.theme-btn:active {
+  transform: scale(0.98);
+}
+
+/* ========== 主區與 Logo ========== */
+.main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem 3rem;
+}
+
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2.5rem 1rem 3rem;
+}
+
+.logo-glass {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem 2.5rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px;
+  backdrop-filter: blur(20px);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 var(--shine);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.logo-glass:hover {
+  transform: scale(1.03);
+  box-shadow: 
+    0 16px 48px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 var(--shine);
+}
+
+.logo-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 40%,
+    var(--shine) 45%,
+    var(--shine) 55%,
+    transparent 60%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: logoShine 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes logoShine {
+  0%, 100% { background-position: 200% 0; }
+  50% { background-position: -200% 0; }
+}
+
+.logo-img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  max-width: 180px;
+  max-height: 80px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* ========== 分類按鈕 ========== */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.tab {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  transition: all var(--transition);
+}
+.tab:hover {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.tab.active {
+  background: var(--accent-soft);
+  color: var(--tab-active);
+  border-color: var(--accent);
+}
+
+/* ========== 商品卡區 ========== */
+.cards-section {
+  min-height: 280px;
+}
+
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 3rem 1rem;
+  font-size: 1.05rem;
+}
+
+/* ========== 商品卡 ========== */
+.product-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.04),
+    0 0 0 1px var(--card-border);
+  border-color: var(--accent);
+}
+
+.card-badge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 2;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.card-badge.new {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #fff;
+}
+.card-badge.hot {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: #fff;
+}
+.card-badge.recommend {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: #fff;
+}
+
+.card-image-wrap {
+  width: calc(100% + 2.5rem);
+  margin: -1.25rem 0 0.75rem -1.25rem;
+  border-radius: var(--radius) var(--radius) 0 0;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.card-image {
+  display: block;
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+}
+
+.card-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding-right: 0.5rem;
+}
+
+.card-dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.card-dates span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.card-registered {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 0.75rem;
+}
+
+.progress-wrap {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.progress-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.progress-steps {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+}
+
+.progress-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.7rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: 8px;
+  min-width: 0;
+  flex: 1;
+  transition: opacity var(--transition), transform var(--transition);
+}
+.progress-node .progress-node-label {
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.progress-node .progress-node-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.progress-node .progress-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.progress-node.passed {
+  background: rgba(34, 197, 94, 0.12);
+  color: #15803d;
+}
+.progress-node.passed .progress-icon {
+  color: #15803d;
+}
+[data-theme="night"] .progress-node.passed {
+  background: rgba(74, 222, 128, 0.15);
+  color: #86efac;
+}
+[data-theme="night"] .progress-node.passed .progress-icon {
+  color: #86efac;
+}
+[data-theme="sakura"] .progress-node.passed {
+  background: rgba(74, 222, 128, 0.15);
+  color: #15803d;
+}
+[data-theme="sakura"] .progress-node.passed .progress-icon {
+  color: #15803d;
+}
+
+.progress-node.current {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+.progress-node.current .progress-icon {
+  color: var(--accent);
+}
+
+.progress-node.pending {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+.progress-node.pending .progress-icon {
+  color: var(--text-muted);
+}
+[data-theme="night"] .progress-node.pending,
+[data-theme="sakura"] .progress-node.pending {
+  background: rgba(0, 0, 0, 0.05);
+}
+[data-theme="night"] .progress-node.pending {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.countdown {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+}
+.countdown span {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,220 @@
+.admin-bg {
+  min-height: 100vh;
+}
+
+.admin-main {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.admin-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  color: var(--text);
+}
+
+.admin-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0 0 1.5rem;
+}
+
+.admin-form {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(12px);
+}
+
+.form-row {
+  margin-bottom: 1.25rem;
+}
+.form-row:last-of-type {
+  margin-bottom: 0;
+}
+
+.form-row label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+
+.required {
+  color: var(--accent);
+}
+
+.form-row input[type="text"],
+.form-row input[type="date"],
+.form-row input[type="datetime-local"],
+.form-row input[type="url"] {
+  width: 100%;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--text);
+  transition: border-color var(--transition);
+}
+[data-theme="night"] .form-row input[type="text"],
+[data-theme="night"] .form-row input[type="date"],
+[data-theme="night"] .form-row input[type="datetime-local"],
+[data-theme="night"] .form-row input[type="url"],
+[data-theme="sakura"] .form-row input[type="text"],
+[data-theme="sakura"] .form-row input[type="date"],
+[data-theme="sakura"] .form-row input[type="datetime-local"],
+[data-theme="sakura"] .form-row input[type="url"] {
+  background: rgba(0, 0, 0, 0.2);
+}
+.form-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.radio-group,
+.progress-edit {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+}
+
+.radio-label,
+.check-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 400;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.radio-label:has(input:checked),
+.check-label:has(input:checked) {
+  color: var(--accent);
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.btn {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  padding: 0.65rem 1.25rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: none;
+  transition: opacity var(--transition), transform 0.2s ease;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.btn-secondary:hover {
+  opacity: 0.85;
+}
+
+.config-box {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(12px);
+}
+.config-box h3 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+.config-box p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin: 0 0 0.75rem;
+}
+.config-box label {
+  display: block;
+  font-size: 0.85rem;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+.config-box input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.4);
+  color: var(--text);
+}
+.config-box .hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+.config-box code {
+  background: var(--accent-soft);
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+.message {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  display: none;
+}
+.message.show {
+  display: block;
+}
+.message.success {
+  background: rgba(34, 197, 94, 0.2);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+[data-theme="night"] .message.success,
+[data-theme="sakura"] .message.success {
+  background: rgba(74, 222, 128, 0.15);
+  color: #86efac;
+  border-color: rgba(74, 222, 128, 0.35);
+}
+.message.error {
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+[data-theme="night"] .message.error,
+[data-theme="sakura"] .message.error {
+  background: rgba(248, 113, 113, 0.15);
+  color: #fca5a5;
+  border-color: rgba(248, 113, 113, 0.35);
+}
