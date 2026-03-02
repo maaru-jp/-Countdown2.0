@@ -118,7 +118,8 @@
   function submitToSheet(payload, onDone) {
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
     if (!url || !url.trim()) {
-      if (onDone) onDone(new Error('請先填寫 Google Apps Script 網址'));
+      if (onDone) onDone(new Error('
+https://script.google.com/macros/s/AKfycbwMsCxagnkHf6TbS5PzLJ-PpxyJY32eeDLTkX_vdDmCDeJ8OdUE2DxWyh4w2yquj7v3/exec'));
       return;
     }
     url = url.trim().replace(/\/$/, '');
@@ -231,3 +232,4 @@
     });
   }
 })();
+
