@@ -107,27 +107,43 @@
     }
   }
 
+  function addField(form, name, value) {
+    var input = document.createElement('input');
+    input.name = name;
+    input.type = 'hidden';
+    input.value = value == null ? '' : value;
+    form.appendChild(input);
+  }
+
   function submitToSheet(payload, onDone) {
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
     if (!url || !url.trim()) {
       if (onDone) onDone(new Error('請先填寫 Google Apps Script 網址'));
       return;
     }
+    url = url.trim().replace(/\/$/, '');
     setSubmitLoading(true);
-    fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'append', row: payload })
-    })
-      .then(function (res) { return res.json ? res.json() : res.text(); })
-      .then(function () {
-        setSubmitLoading(false);
-        if (onDone) onDone(null);
-      })
-      .catch(function (err) {
-        setSubmitLoading(false);
-        if (onDone) onDone(err);
-      });
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = url;
+    form.target = '_blank';
+    form.style.display = 'none';
+    form.enctype = 'application/x-www-form-urlencoded';
+    addField(form, 'action', 'append');
+    addField(form, 'title', payload.title);
+    addField(form, 'imageUrl', payload.imageUrl);
+    addField(form, 'badge', payload.badge);
+    addField(form, 'startDate', payload.startDate);
+    addField(form, 'endDate', payload.endDate);
+    addField(form, 'registeredCount', payload.registeredCount != null ? String(payload.registeredCount) : '');
+    addField(form, 'status', payload.status);
+    addField(form, 'progress', JSON.stringify(payload.progress || []));
+    addField(form, 'countdownTo', payload.countdownTo);
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    setSubmitLoading(false);
+    if (onDone) onDone(null);
   }
 
   document.getElementById('groupForm').addEventListener('submit', function (e) {
@@ -145,9 +161,9 @@
       submitToSheet(payload, function (err) {
         addToLocal(payload);
         if (err) {
-          showMessage('已儲存至本機，但匯入試算表時發生錯誤（可能需檢查 CORS 或改為用 doPost 接收）。', 'error');
+          showMessage('已儲存至本機，但匯入試算表時發生錯誤。', 'error');
         } else {
-          showMessage('已匯入 Google 試算表並更新本機資料，可至展示頁查看。', 'success');
+          showMessage('已送出並儲存至本機。請看「新開分頁」：若顯示 {"ok":true} 表示試算表已寫入；若有 error 請依訊息檢查 Apps Script 與試算表 ID。', 'success');
         }
       });
     } else {
