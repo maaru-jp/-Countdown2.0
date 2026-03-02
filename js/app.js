@@ -153,11 +153,11 @@
 
       let progressHtml = '';
       if (p.progress && p.progress.length) {
-        var currentIdx = p.progress.findIndex(function (n) { return !n.done; });
+        var currentIdx = (p.status === 'ended') ? -1 : p.progress.findIndex(function (n) { return !n.done; });
         progressHtml = '<div class="progress-steps">' + p.progress.map(function (node, i) {
           var c = node.done ? 'passed' : (i === currentIdx) ? 'current' : 'pending';
           var icon = getProgressIcon(node.name);
-          return '<div class="progress-node ' + c + '"><span class="progress-node-label">' + escapeHtml(node.name) + '</span><span class="progress-node-icon">' + icon + '</span></div>';
+          return '<div class="progress-node ' + c + '"><span class="progress-node-label">' + escapeHtml(node.name) + '</span><span class="progress-node-icon">' + icon + '<span class="progress-node-light" aria-hidden="true"></span></span></div>';
         }).join('') + '</div>';
       }
 
