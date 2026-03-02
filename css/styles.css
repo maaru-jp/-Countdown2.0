@@ -399,10 +399,18 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
 }
 .progress-node .progress-icon {
   width: 14px;
   height: 14px;
+}
+.progress-node-light {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: background var(--transition), box-shadow var(--transition);
 }
 
 .progress-node.passed {
@@ -412,6 +420,10 @@ body {
 .progress-node.passed .progress-icon {
   color: #15803d;
 }
+.progress-node.passed .progress-node-light {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
 [data-theme="night"] .progress-node.passed {
   background: rgba(74, 222, 128, 0.15);
   color: #86efac;
@@ -419,12 +431,20 @@ body {
 [data-theme="night"] .progress-node.passed .progress-icon {
   color: #86efac;
 }
+[data-theme="night"] .progress-node.passed .progress-node-light {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+}
 [data-theme="sakura"] .progress-node.passed {
   background: rgba(74, 222, 128, 0.15);
   color: #15803d;
 }
 [data-theme="sakura"] .progress-node.passed .progress-icon {
   color: #15803d;
+}
+[data-theme="sakura"] .progress-node.passed .progress-node-light {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
 }
 
 .progress-node.current {
@@ -436,6 +456,10 @@ body {
 .progress-node.current .progress-icon {
   color: var(--accent);
 }
+.progress-node.current .progress-node-light {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
 
 .progress-node.pending {
   background: rgba(0, 0, 0, 0.05);
@@ -445,12 +469,19 @@ body {
 .progress-node.pending .progress-icon {
   color: var(--text-muted);
 }
+.progress-node.pending .progress-node-light {
+  background: rgba(0, 0, 0, 0.15);
+  box-shadow: none;
+}
 [data-theme="night"] .progress-node.pending,
 [data-theme="sakura"] .progress-node.pending {
   background: rgba(0, 0, 0, 0.05);
 }
 [data-theme="night"] .progress-node.pending {
   background: rgba(255, 255, 255, 0.06);
+}
+[data-theme="night"] .progress-node.pending .progress-node-light {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .countdown {
