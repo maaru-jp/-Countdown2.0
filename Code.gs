@@ -1,11 +1,11 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '你的試算表ID';
+const SPREADSHEET_ID = '17HG6DJAApZu9HqQRq7NtZTloOGZanKA96o8g2K_hIZ4';
 
 function doPost(e) {
   try {
-    if (!SPREADSHEET_ID || SPREADSHEET_ID === '你的試算表ID') {
+    if (!SPREADSHEET_ID || SPREADSHEET_ID === '17HG6DJAApZu9HqQRq7NtZTloOGZanKA96o8g2K_hIZ4') {
       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '請在程式碼中設定 SPREADSHEET_ID 為你的試算表 ID' })).setMimeType(ContentService.MimeType.JSON);
     }
     var p = e.parameter || {};
@@ -101,3 +101,4 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
+
