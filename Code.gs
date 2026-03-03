@@ -1,57 +1,131 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = "17HG6DJAApZu9HqQRq7NtZTloOGZanKA96o8g2K_hIZ4";
+const SPREADSHEET_ID = '你的試算表ID';
+
+// 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
+// 規則 1：即將開團 + 有開團日 → 開團日當天 0:00（UTC）起視為「正在開團中」
+// 規則 2：正在開團中 + 有結團日 → 結團日 23:59:59（UTC）過後視為「已結團」
+function resolveStatusForApi(sheetStatus, startDate, endDate) {
+  var s = String(sheetStatus || '').trim();
+  var now = new Date();
+
+  if (s === 'upcoming' || s === '即將開團') {
+    if (startDate !== undefined && startDate !== null && startDate !== '') {
+      var start = new Date(startDate);
+      if (!isNaN(start.getTime())) {
+        var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
+        var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
+        if (now >= startMidnight) return 'ongoing';
+      }
+    }
+    return s || 'upcoming';
+  }
+
+  if (s === 'ongoing' || s === '正在開團中') {
+    if (endDate !== undefined && endDate !== null && endDate !== '') {
+      var end = new Date(endDate);
+      if (!isNaN(end.getTime())) {
+        var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
+        var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
+        if (now > endOfDay) return 'ended';
+      }
+    }
+    return s || 'ongoing';
+  }
+
+  return s || 'ongoing';
+}
+
+// 只解析「表單格式」action=val&key=val，絕不把這類字串送進 JSON.parse
+function parseFormBody(e) {
+  var p = {};
+  if (!e || typeof e !== 'object') return p;
+  if (e.parameter && typeof e.parameter === 'object') {
+    for (var k in e.parameter) if (e.parameter.hasOwnProperty(k)) p[k] = e.parameter[k];
+  }
+  if (!e.postData || !e.postData.contents) return p;
+  var raw = String(e.postData.contents);
+  var firstChar = raw.trim().charAt(0);
+  if (firstChar === '{' || firstChar === '[') {
+    try {
+      var j = JSON.parse(raw);
+      if (j.action === 'append' && j.row) return { action: 'append', row: j.row };
+    } catch (err) {}
+    return p;
+  }
+  if (raw.indexOf('=') === -1 || raw.indexOf('&') === -1) return p;
+  var parts = raw.split('&');
+  for (var i = 0; i < parts.length; i++) {
+    var pair = parts[i].split('=');
+    var key = decodeURIComponent(String(pair[0] || '').replace(/\+/g, ' '));
+    var val = decodeURIComponent(String(pair[1] || '').replace(/\+/g, ' '));
+    p[key] = val;
+  }
+  return p;
+}
 
 function doPost(e) {
   try {
-    if (!SPREADSHEET_ID || SPREADSHEET_ID === "17HG6DJAApZu9HqQRq7NtZTloOGZanKA96o8g2K_hIZ4") {
+    e = e || {};
+    if (!SPREADSHEET_ID || SPREADSHEET_ID === '你的試算表ID') {
       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '請在程式碼中設定 SPREADSHEET_ID 為你的試算表 ID' })).setMimeType(ContentService.MimeType.JSON);
     }
-    var p = e.parameter || {};
-    if (String(p.action) !== 'append') {
-      var raw = (p.payload) ? p.payload : (e.postData && e.postData.contents) ? e.postData.contents : null;
-      if (raw) {
+    var p = parseFormBody(e);
+    if (String(p.action) === 'append') {
+      var progressStr = p.progress || '[]';
+      var values = [
+        p.title || '',
+        p.imageUrl || '',
+        p.badge || '',
+        p.startDate || '',
+        p.endDate || '',
+        p.registeredCount || '',
+        p.status || '',
+        progressStr,
+        p.countdownTo || '',
+        new Date().toISOString()
+      ];
+      var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+      var sheet = ss.getSheets()[0];
+      sheet.appendRow(values);
+      var rows = sheet.getLastRow();
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, sheetName: sheet.getName(), rows: rows, message: '已寫入試算表「' + sheet.getName() + '」，目前共 ' + rows + ' 列（含標題）' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (p.row) {
+      var row = typeof p.row === 'object' ? p.row : null;
+      if (!row && typeof p.row === 'string') try { row = JSON.parse(p.row); } catch (err) {}
+      if (row && row.title !== undefined) {
+        var progressStr = JSON.stringify(row.progress || []);
+        var values = [
+          row.title || '', row.imageUrl || '', row.badge || '', row.startDate || '', row.endDate || '',
+          row.registeredCount !== undefined && row.registeredCount !== null ? String(row.registeredCount) : '',
+          row.status || '', progressStr, row.countdownTo || '', new Date().toISOString()
+        ];
+        var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
+        sheet.appendRow(values);
+        return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    var raw = (e.postData && e.postData.contents) ? String(e.postData.contents) : '';
+    if (raw.trim().charAt(0) === '{') {
+      try {
         var params = JSON.parse(raw);
         if (params.action === 'append' && params.row) {
           var row = params.row;
           var progressStr = JSON.stringify(row.progress || []);
           var values = [
-            row.title || '',
-            row.imageUrl || '',
-            row.badge || '',
-            row.startDate || '',
-            row.endDate || '',
+            row.title || '', row.imageUrl || '', row.badge || '', row.startDate || '', row.endDate || '',
             row.registeredCount !== undefined && row.registeredCount !== null ? String(row.registeredCount) : '',
-            row.status || '',
-            progressStr,
-            row.countdownTo || '',
-            new Date().toISOString()
+            row.status || '', progressStr, row.countdownTo || '', new Date().toISOString()
           ];
           var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
           sheet.appendRow(values);
           return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
         }
-      }
-      return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'invalid action or no data' })).setMimeType(ContentService.MimeType.JSON);
+      } catch (err) {}
     }
-    var progressStr = p.progress || '[]';
-    var values = [
-      p.title || '',
-      p.imageUrl || '',
-      p.badge || '',
-      p.startDate || '',
-      p.endDate || '',
-      p.registeredCount || '',
-      p.status || '',
-      progressStr,
-      p.countdownTo || '',
-      new Date().toISOString()
-    ];
-    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    var sheet = ss.getSheets()[0];
-    sheet.appendRow(values);
-    return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
+    return ContentService.createTextOutput(JSON.stringify({ ok: false, error: 'invalid action or no data' })).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ ok: false, error: String(err.message) })).setMimeType(ContentService.MimeType.JSON);
   }
@@ -83,6 +157,17 @@ function doGet(e) {
       } catch (e) {}
       var rc = row[5];
       var registeredCount = (rc === '' || rc === undefined || rc === null) ? null : (parseInt(rc, 10) || 0);
+      var sheetStatus = row[6] || 'ongoing';
+      var status = resolveStatusForApi(sheetStatus, row[3], row[4]);
+      var rawCountdown = row[8];
+      var countdownTo = null;
+      if (rawCountdown != null && rawCountdown !== '') {
+        if (typeof rawCountdown === 'object' && rawCountdown.getTime) {
+          countdownTo = rawCountdown.toISOString ? rawCountdown.toISOString() : String(rawCountdown);
+        } else {
+          countdownTo = String(rawCountdown).trim() || null;
+        }
+      }
       return {
         id: id,
         title: row[0],
@@ -91,9 +176,9 @@ function doGet(e) {
         startDate: row[3],
         endDate: row[4],
         registeredCount: registeredCount,
-        status: row[6] || 'ongoing',
+        status: status,
         progress: progress,
-        countdownTo: row[8] || null
+        countdownTo: countdownTo
       };
     });
     return ContentService.createTextOutput(JSON.stringify(list)).setMimeType(ContentService.MimeType.JSON);
@@ -101,5 +186,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
-
