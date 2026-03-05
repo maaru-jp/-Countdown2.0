@@ -168,6 +168,15 @@ function doGet(e) {
           countdownTo = String(rawCountdown).trim() || null;
         }
       }
+      var rawListedAt = row[9];
+      var listedAt = null;
+      if (rawListedAt != null && rawListedAt !== '') {
+        if (typeof rawListedAt === 'object' && rawListedAt.getTime) {
+          listedAt = rawListedAt.toISOString ? rawListedAt.toISOString() : String(rawListedAt);
+        } else {
+          listedAt = String(rawListedAt).trim() || null;
+        }
+      }
       return {
         id: id,
         title: row[0],
@@ -178,7 +187,8 @@ function doGet(e) {
         registeredCount: registeredCount,
         status: status,
         progress: progress,
-        countdownTo: countdownTo
+        countdownTo: countdownTo,
+        listedAt: listedAt
       };
     });
     return ContentService.createTextOutput(JSON.stringify(list)).setMimeType(ContentService.MimeType.JSON);
