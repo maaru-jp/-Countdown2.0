@@ -99,7 +99,20 @@
   }
 
   function getFiltered() {
-    return allProducts.filter(function (p) { return p.status === currentFilter; });
+    var list = allProducts.filter(function (p) { return p.status === currentFilter; });
+    if (currentFilter === 'ongoing') {
+      list = list.slice().sort(function (a, b) {
+        var da = a.listedAt || a.startDate || '';
+        var db = b.listedAt || b.startDate || '';
+        if (!da && !db) return 0;
+        if (!da) return 1;
+        if (!db) return -1;
+        var ta = new Date(da).getTime();
+        var tb = new Date(db).getTime();
+        return isNaN(tb) - isNaN(ta) || tb - ta;
+      });
+    }
+    return list;
   }
 
   function formatDate(str) {
