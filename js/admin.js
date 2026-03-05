@@ -153,7 +153,13 @@
       })
       .catch(function (err) {
         setSubmitLoading(false);
-        showMessage('無法連線至 Apps Script：' + (err && err.message ? err.message : '請檢查網址與網路').toString(), 'error');
+        var msg = (err && err.message) ? err.message : '請檢查網址與網路';
+        if (msg === 'Failed to fetch') {
+          msg = '無法連線（Failed to fetch）。請確認：1) Apps Script 已部署為「網路應用程式」且存取權設為「所有使用者」；2) 網址正確且無多餘空白；3) 無擴充功能或防火牆封鎖 script.google.com；4) 若為本機 file:// 請改由 localhost 或 GitHub Pages 開啟。';
+        } else {
+          msg = '無法連線至 Apps Script：' + msg;
+        }
+        showMessage(msg, 'error');
         if (onDone) onDone(err);
       });
   }

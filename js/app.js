@@ -98,17 +98,18 @@
     } catch (_) {}
   }
 
+  // 各分類內依「開團日」由新到舊排列（最新在上）
   function getFiltered() {
     var list = allProducts.filter(function (p) { return p.status === currentFilter; });
     list = list.slice().sort(function (a, b) {
-      var da = a.listedAt || a.startDate || '';
-      var db = b.listedAt || b.startDate || '';
+      var da = a.startDate || '';
+      var db = b.startDate || '';
       if (!da && !db) return 0;
       if (!da) return 1;
       if (!db) return -1;
-      var ta = new Date(da).getTime();
-      var tb = new Date(db).getTime();
-      return isNaN(tb) - isNaN(ta) || tb - ta;
+      var ta = new Date(da + (da.indexOf('T') >= 0 ? '' : 'T00:00:00')).getTime();
+      var tb = new Date(db + (db.indexOf('T') >= 0 ? '' : 'T00:00:00')).getTime();
+      return isNaN(tb) - isNaN(ta) || tb - ta; // 開團日較新（較晚）的排上面
     });
     return list;
   }
