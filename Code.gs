@@ -72,6 +72,33 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '請在程式碼中設定 SPREADSHEET_ID 為你的試算表 ID' })).setMimeType(ContentService.MimeType.JSON);
     }
     var p = parseFormBody(e);
+    if (String(p.action) === 'update') {
+      var rowIndex = parseInt(p.rowIndex, 10);
+      if (isNaN(rowIndex) || rowIndex < 2) {
+        return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '請提供有效的 rowIndex（從 2 起）' })).setMimeType(ContentService.MimeType.JSON);
+      }
+      var progressStr = p.progress || '[]';
+      var values = [
+        p.title || '',
+        p.imageUrl || '',
+        p.badge || '',
+        p.startDate || '',
+        p.endDate || '',
+        p.registeredCount || '',
+        p.status || '',
+        progressStr,
+        p.countdownTo || '',
+        new Date().toISOString()
+      ];
+      var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+      var sheet = ss.getSheets()[0];
+      var lastRow = sheet.getLastRow();
+      if (rowIndex > lastRow) {
+        return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '該列不存在' })).setMimeType(ContentService.MimeType.JSON);
+      }
+      sheet.getRange(rowIndex, 1, rowIndex, values.length).setValues([values]);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, message: '已更新試算表第 ' + rowIndex + ' 列' })).setMimeType(ContentService.MimeType.JSON);
+    }
     if (String(p.action) === 'append') {
       var progressStr = p.progress || '[]';
       var values = [
