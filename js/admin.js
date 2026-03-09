@@ -92,6 +92,168 @@
     saveExisting(list);
   }
 
+  function updateInLocal(id, payload) {
+    var list = loadExisting();
+    var idx = list.findIndex(function (item) { return item.id === id; });
+    if (idx < 0) return false;
+    list[idx] = payload;
+    saveExisting(list);
+    return true;
+  }
+
+  function findInLocal(id) {
+    var list = loadExisting();
+    return list.find(function (item) { return item.id === id; }) || null;
+  }
+
+  function renderExistingList() {
+    var box = document.getElementById('existingListBox');
+    var clearBtn = document.getElementById('clearEditBtn');
+    var editingIdEl = document.getElementById('editingId');
+    var editingId = (editingIdEl && editingIdEl.value) ? editingIdEl.value.trim() : '';
+    if (!box) return;
+    var list = loadExisting();
+    box.innerHTML = '';
+    list.forEach(function (item) {
+      var statusTxt = { upcoming: '即將開團', ongoing: '正在開團', ended: '已結團' }[item.status] || item.status;
+      var meta = [item.startDate, item.endDate, statusTxt].filter(Boolean).join(' · ');
+      var div = document.createElement('div');
+      div.className = 'existing-item';
+      div.innerHTML =
+        '<div class="existing-item-info">' +
+          '<div class="existing-item-title">' + escapeHtml(item.title || '未命名') + '</div>' +
+          '<div class="existing-item-meta">' + escapeHtml(meta) + '</div>' +
+        '</div>' +
+        '<div class="existing-item-actions">' +
+          '<button type="button" class="btn btn-secondary existing-load-btn" data-id="' + escapeHtml(item.id) + '">載入編輯</button>' +
+        '</div>';
+      box.appendChild(div);
+    });
+    list.forEach(function (item, i) {
+      var btn = box.querySelector('.existing-load-btn[data-id="' + item.id + '"]');
+      if (btn) btn.addEventListener('click', function () { loadItemIntoForm(item.id); });
+    });
+    if (clearBtn) clearBtn.style.display = editingId ? 'inline-block' : 'none';
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    var div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function loadItemIntoForm(id) {
+    var item = findInLocal(id);
+    if (!item) {
+      showMessage('找不到該筆資料。', 'error');
+      return;
+    }
+    var form = document.getElementById('groupForm');
+    form.title.value = item.title || '';
+    form.imageUrl.value = item.imageUrl || '';
+    if (form.imageUrl && !form.imageUrl.value && item.imageUrl) form.imageUrl.value = item.imageUrl;
+    var badge = (item.badge === 'new' || item.badge === 'recommend') ? item.badge : 'hot';
+    var badgeEl = form.querySelector('input[name="badge"][value="' + badge + '"]');
+    if (badgeEl) badgeEl.checked = true;
+    form.startDate.value = item.startDate || '';
+    form.endDate.value = item.endDate || '';
+    var status = (item.status === 'upcoming' || item.status === 'ended') ? item.status : 'ongoing';
+    var statusEl = form.querySelector('input[name="status"][value="' + status + '"]');
+    if (statusEl) statusEl.checked = true;
+    form.registeredCount.value = (item.registeredCount != null && item.registeredCount !== '') ? String(item.registeredCount) : '';
+    var progressNames = ['收單中', '等待出荷', '集運中', '抵台', '已完成出貨'];
+    var progress = item.progress || [];
+    progressNames.forEach(function (name) {
+      var el = form.querySelector('input[data-name="' + name + '"]');
+      if (el) {
+        var p = progress.find(function (x) { return x.name === name; });
+        el.checked = !!(p && p.done);
+      }
+    });
+    var ct = item.countdownTo;
+    if (ct) {
+      try {
+        var d = new Date(ct);
+        if (!isNaN(d.getTime())) {
+          var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+          var h = String(d.getHours()).padStart(2, '0'), min = String(d.getMinutes()).padStart(2, '0');
+          form.countdownTo.value = y + '-' + m + '-' + day + 'T' + h + ':' + min;
+        } else { form.countdownTo.value = ''; }
+      } catch (_) { form.countdownTo.value = ''; }
+    } else {
+      form.countdownTo.value = '';
+    }
+    var editingIdEl = document.getElementById('editingId');
+    if (editingIdEl) editingIdEl.value = id;
+    renderExistingList();
+    showMessage('已載入「' + (item.title || '') + '」，可修改狀態或進度後按「送出」或「僅儲存至本機」。', 'success');
+  }
+
+  function clearEditMode() {
+    var editingIdEl = document.getElementById('editingId');
+    if (editingIdEl) editingIdEl.value = '';
+    renderExistingList();
+    showMessage('已切換為新增模式，表單可留空或填寫新的一筆。', 'success');
+  }
+
+  function loadFromSheet() {
+    var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
+    if (!url || !url.trim()) {
+      showMessage('請先填寫下方 Google Apps Script 網址。', 'error');
+      return;
+    }
+    url = url.trim().replace(/\/$/, '');
+    var btn = document.getElementById('loadFromSheetBtn');
+    if (btn) { btn.disabled = true; btn.textContent = '載入中…'; }
+    fetch(url)
+      .then(function (res) { return res.json(); })
+      .then(function (list) {
+        if (btn) { btn.disabled = false; btn.textContent = '從試算表載入列表（取得列號以支援同步更新）'; }
+        if (!Array.isArray(list) || list.length === 0) {
+          showMessage('試算表目前沒有資料，或回傳格式不符。', 'success');
+          return;
+        }
+        var existing = loadExisting();
+        var byId = {};
+        existing.forEach(function (item) { byId[item.id] = item; });
+        list.forEach(function (row) {
+          var id = row.id;
+          var sheetRowIndex = null;
+          if (typeof id === 'string' && id.indexOf('row-') === 0) {
+            sheetRowIndex = parseInt(id.replace('row-', ''), 10);
+            if (isNaN(sheetRowIndex)) sheetRowIndex = null;
+          }
+          var payload = {
+            id: id,
+            title: row.title,
+            imageUrl: row.imageUrl || null,
+            badge: row.badge || 'hot',
+            startDate: row.startDate,
+            endDate: row.endDate,
+            registeredCount: row.registeredCount != null ? row.registeredCount : null,
+            status: row.status || 'ongoing',
+            progress: Array.isArray(row.progress) ? row.progress : [],
+            countdownTo: row.countdownTo || null,
+            sheetRowIndex: sheetRowIndex
+          };
+          var idx = existing.findIndex(function (item) { return item.id === id; });
+          if (idx >= 0) {
+            existing[idx] = Object.assign({}, existing[idx], payload);
+          } else {
+            existing.push(payload);
+          }
+        });
+        saveExisting(existing);
+        renderExistingList();
+        showMessage('已從試算表載入 ' + list.length + ' 筆，並記錄列號。之後載入編輯並送出即可同步更新試算表。', 'success');
+      })
+      .catch(function (err) {
+        if (btn) { btn.disabled = false; btn.textContent = '從試算表載入列表（取得列號以支援同步更新）'; }
+        showMessage('無法連線至試算表：' + (err && err.message ? err.message : '請檢查網址與網路'), 'error');
+      });
+  }
+
   function showMessage(text, type) {
     var el = document.getElementById('message');
     if (!el) return;
@@ -145,7 +307,7 @@
         setSubmitLoading(false);
         if (result && result.ok) {
           showMessage(result.message || '已寫入試算表「' + (result.sheetName || '') + '」，目前共 ' + (result.rows || 0) + ' 列。', 'success');
-          if (onDone) onDone(null);
+          if (onDone) onDone(null, result);
         } else {
           showMessage((result && result.error) ? result.error : '寫入試算表時發生錯誤。', 'error');
           if (onDone) onDone(new Error(result && result.error ? result.error : 'unknown'));
@@ -164,6 +326,50 @@
       });
   }
 
+  function submitToSheetUpdate(payload, onDone) {
+    var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
+    if (!url || !url.trim()) {
+      if (onDone) onDone(new Error('請先填寫 Google Apps Script 網址'));
+      return;
+    }
+    url = url.trim().replace(/\/$/, '');
+    setSubmitLoading(true);
+    var params = new URLSearchParams();
+    params.append('action', 'update');
+    params.append('rowIndex', String(payload.sheetRowIndex != null ? payload.sheetRowIndex : ''));
+    params.append('title', payload.title || '');
+    params.append('imageUrl', payload.imageUrl || '');
+    params.append('badge', payload.badge || 'hot');
+    params.append('startDate', payload.startDate || '');
+    params.append('endDate', payload.endDate || '');
+    params.append('registeredCount', payload.registeredCount != null ? String(payload.registeredCount) : '');
+    params.append('status', payload.status || 'ongoing');
+    params.append('progress', JSON.stringify(payload.progress || []));
+    params.append('countdownTo', payload.countdownTo || '');
+    fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: params.toString()
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (result) {
+        setSubmitLoading(false);
+        if (result && result.ok) {
+          showMessage(result.message || '已更新試算表該列。', 'success');
+          if (onDone) onDone(null);
+        } else {
+          showMessage((result && result.error) ? result.error : '更新試算表時發生錯誤。', 'error');
+          if (onDone) onDone(new Error(result && result.error ? result.error : 'unknown'));
+        }
+      })
+      .catch(function (err) {
+        setSubmitLoading(false);
+        var msg = (err && err.message) ? err.message : '請檢查網址與網路';
+        showMessage('無法連線：' + msg, 'error');
+        if (onDone) onDone(err);
+      });
+  }
+
   document.getElementById('groupForm').addEventListener('submit', function (e) {
     e.preventDefault();
     var data = getFormData();
@@ -171,16 +377,44 @@
       showMessage('請填寫商品名稱、開團日期與結團日期。', 'error');
       return;
     }
-    var id = generateId();
+    var editingIdEl = document.getElementById('editingId');
+    var editingId = (editingIdEl && editingIdEl.value) ? editingIdEl.value.trim() : '';
+    var id = editingId || generateId();
+    var existing = editingId ? findInLocal(editingId) : null;
     var payload = buildPayload(data, id);
+    if (existing && existing.sheetRowIndex != null) payload.sheetRowIndex = existing.sheetRowIndex;
+
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
-    if (url && url.trim()) {
-      setScriptUrl(url.trim());
-      addToLocal(payload);
-      submitToSheet(payload, function () {});
+    if (editingId) {
+      updateInLocal(editingId, payload);
+      if (editingIdEl) editingIdEl.value = '';
+      renderExistingList();
+      if (url && url.trim() && payload.sheetRowIndex != null) {
+        setScriptUrl(url.trim());
+        submitToSheetUpdate(payload, function () {});
+      } else if (url && url.trim()) {
+        showMessage('已更新本機資料。試算表未同步（此筆當初未記錄列號），請手動修改試算表或重新匯入。', 'success');
+      } else {
+        showMessage('已更新本機資料，可至展示頁查看。', 'success');
+      }
     } else {
-      addToLocal(payload);
-      showMessage('已儲存至本機。若需匯入試算表，請先填寫下方 Apps Script 網址後再送出。', 'success');
+      if (url && url.trim()) {
+        setScriptUrl(url.trim());
+        addToLocal(payload);
+        submitToSheet(payload, function (err, result) {
+          if (!err && result && result.rows != null) {
+            var list = loadExisting();
+            var last = list[list.length - 1];
+            if (last && last.id === payload.id) {
+              last.sheetRowIndex = result.rows;
+              saveExisting(list);
+            }
+          }
+        });
+      } else {
+        addToLocal(payload);
+        showMessage('已儲存至本機。若需匯入試算表，請先填寫下方 Apps Script 網址後再送出。', 'success');
+      }
     }
   });
 
@@ -190,11 +424,32 @@
       showMessage('請填寫商品名稱、開團日期與結團日期。', 'error');
       return;
     }
-    var id = generateId();
+    var editingIdEl = document.getElementById('editingId');
+    var editingId = (editingIdEl && editingIdEl.value) ? editingIdEl.value.trim() : '';
+    var id = editingId || generateId();
+    var existing = editingId ? findInLocal(editingId) : null;
     var payload = buildPayload(data, id);
-    addToLocal(payload);
-    showMessage('已僅儲存至本機，可至展示頁查看。', 'success');
+    if (existing && existing.sheetRowIndex != null) payload.sheetRowIndex = existing.sheetRowIndex;
+
+    if (editingId) {
+      updateInLocal(editingId, payload);
+      if (editingIdEl) editingIdEl.value = '';
+      renderExistingList();
+      showMessage('已更新本機資料，可至展示頁查看。', 'success');
+    } else {
+      addToLocal(payload);
+      showMessage('已僅儲存至本機，可至展示頁查看。', 'success');
+    }
   });
+
+  document.getElementById('clearEditBtn').addEventListener('click', function () {
+    clearEditMode();
+  });
+
+  var loadFromSheetBtn = document.getElementById('loadFromSheetBtn');
+  if (loadFromSheetBtn) {
+    loadFromSheetBtn.addEventListener('click', function () { loadFromSheet(); });
+  }
 
   var scriptInput = document.getElementById('scriptUrl');
   if (scriptInput) {
@@ -242,4 +497,6 @@
       b.classList.toggle('active', b.dataset.theme === savedTheme);
     });
   }
+
+  renderExistingList();
 })();
