@@ -21,6 +21,72 @@
   margin: 0 0 1.5rem;
 }
 
+.existing-list-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  backdrop-filter: blur(12px);
+}
+.existing-list-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.35rem;
+  color: var(--text);
+}
+.existing-list-desc {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0 0 0.75rem;
+}
+#loadFromSheetBtn {
+  margin-bottom: 0.75rem;
+}
+.existing-list-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.existing-list-box:empty::before {
+  content: "尚無本機開團資料，請在下方表單新增。";
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.existing-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+}
+.existing-item-info {
+  flex: 1;
+  min-width: 0;
+}
+.existing-item-title {
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 0.2rem;
+}
+.existing-item-meta {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.existing-item-actions {
+  flex-shrink: 0;
+}
+.existing-item-actions .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
 .admin-form {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
