@@ -1,10 +1,10 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '1aUzAPcHtrsxufOSumJPdWgiOUZLkPi2BHQadofrmdxg';
+const SPREADSHEET_ID = '你的試算表ID';
 
 // 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
-// 以「日期」為準：開團日前 → 即將開團；開團日～結團日 → 正在開團；結團日後 → 已結團（不受試算表內儲存的狀態影響）
+// 開團日「中午 12:00（UTC）」起為正在開團；之前為即將開團；結團日後為已結團
 function resolveStatusForApi(sheetStatus, startDate, endDate) {
   var now = new Date();
 
@@ -12,17 +12,17 @@ function resolveStatusForApi(sheetStatus, startDate, endDate) {
     var start = new Date(startDate);
     if (!isNaN(start.getTime())) {
       var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
-      var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
-      if (now < startMidnight) return 'upcoming';
+      var startNoonUtc = new Date(Date.UTC(ys, ms, ds, 12, 0, 0, 0));
+      if (now < startNoonUtc) return 'upcoming';
     }
   }
 
+  var todayUtc = now.getUTCFullYear() * 10000 + now.getUTCMonth() * 100 + now.getUTCDate();
   if (endDate !== undefined && endDate !== null && String(endDate).trim() !== '') {
     var end = new Date(endDate);
     if (!isNaN(end.getTime())) {
-      var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
-      var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
-      if (now > endOfDay) return 'ended';
+      var endUtc = end.getUTCFullYear() * 10000 + end.getUTCMonth() * 100 + end.getUTCDate();
+      if (todayUtc > endUtc) return 'ended';
     }
   }
 
@@ -218,4 +218,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
