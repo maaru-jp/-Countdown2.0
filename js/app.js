@@ -262,6 +262,7 @@
         var isCurrent = i === currentPage;
         parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">' + i + '</button>');
       }
+      parts.push('<button type="button" class="pagination-arrow pagination-next" aria-label="下一頁">›</button>');
       nav.innerHTML = parts.join('');
       paginationWrap.innerHTML = '';
       paginationWrap.appendChild(nav);
@@ -275,6 +276,16 @@
           grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
+      var nextBtn = nav.querySelector('.pagination-next');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', function () {
+          if (currentPage >= totalPages) return;
+          currentPage++;
+          renderCards();
+          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        nextBtn.disabled = currentPage >= totalPages;
+      }
     } else if (paginationWrap) {
       paginationWrap.innerHTML = '';
       paginationWrap.hidden = true;
