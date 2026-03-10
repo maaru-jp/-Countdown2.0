@@ -257,12 +257,20 @@
     if (paginationWrap && fullList.length > 0) {
       var nav = document.createElement('div');
       nav.className = 'pagination';
+      // 桌機與手機共用：第 1 頁只顯示右箭頭 ›，第 2 頁起顯示左箭頭 ‹，未到最後一頁時右邊也顯示 ›
+      var showPrev = currentPage > 1;
+      var showNext = currentPage < totalPages;
       var parts = [];
+      if (showPrev) {
+        parts.push('<button type="button" class="pagination-arrow pagination-prev" aria-label="上一頁">‹</button>');
+      }
       for (var i = 1; i <= totalPages; i++) {
         var isCurrent = i === currentPage;
         parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">' + i + '</button>');
       }
-      parts.push('<button type="button" class="pagination-arrow pagination-next" aria-label="下一頁">›</button>');
+      if (showNext) {
+        parts.push('<button type="button" class="pagination-arrow pagination-next" aria-label="下一頁">›</button>');
+      }
       nav.innerHTML = parts.join('');
       paginationWrap.innerHTML = '';
       paginationWrap.appendChild(nav);
@@ -276,6 +284,15 @@
           grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
       });
+      var prevBtn = nav.querySelector('.pagination-prev');
+      if (prevBtn) {
+        prevBtn.addEventListener('click', function () {
+          if (currentPage <= 1) return;
+          currentPage--;
+          renderCards();
+          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
       var nextBtn = nav.querySelector('.pagination-next');
       if (nextBtn) {
         nextBtn.addEventListener('click', function () {
@@ -284,7 +301,6 @@
           renderCards();
           grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
-        nextBtn.disabled = currentPage >= totalPages;
       }
     } else if (paginationWrap) {
       paginationWrap.innerHTML = '';
