@@ -262,14 +262,14 @@
       var showNext = currentPage < totalPages;
       var parts = [];
       if (showPrev) {
-        parts.push('<button type="button" class="pagination-arrow pagination-prev" aria-label="上一頁">‹</button>');
+        parts.push('<button type="button" class="pagination-arrow pagination-prev" aria-label="上一頁"><svg class="pagination-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>');
       }
       for (var i = 1; i <= totalPages; i++) {
         var isCurrent = i === currentPage;
         parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">' + i + '</button>');
       }
       if (showNext) {
-        parts.push('<button type="button" class="pagination-arrow pagination-next" aria-label="下一頁">›</button>');
+        parts.push('<button type="button" class="pagination-arrow pagination-next" aria-label="下一頁"><svg class="pagination-arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>');
       }
       nav.innerHTML = parts.join('');
       paginationWrap.innerHTML = '';
