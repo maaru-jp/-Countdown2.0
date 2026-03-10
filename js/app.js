@@ -99,8 +99,32 @@
   }
 
   // 各分類內依「開團日」由新到舊排列（最新在上）
+  // 依開團日、結團日與現在時間決定顯示狀態（與後端邏輯一致，採 UTC 日期）
+  function resolveStatusByDate(p) {
+    var now = new Date();
+    var startDate = p.startDate ? String(p.startDate).trim() : '';
+    var endDate = p.endDate ? String(p.endDate).trim() : '';
+    if (startDate !== '') {
+      var start = startDate.indexOf('T') >= 0 ? new Date(startDate) : new Date(startDate + 'T00:00:00Z');
+      if (!isNaN(start.getTime())) {
+        var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
+        var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
+        if (now < startMidnight) return 'upcoming';
+      }
+    }
+    if (endDate !== '') {
+      var end = endDate.indexOf('T') >= 0 ? new Date(endDate) : new Date(endDate + 'T23:59:59.999Z');
+      if (!isNaN(end.getTime())) {
+        var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
+        var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
+        if (now > endOfDay) return 'ended';
+      }
+    }
+    return p.status === 'ended' ? 'ended' : (p.status === 'upcoming' ? 'upcoming' : 'ongoing');
+  }
+
   function getFiltered() {
-    var list = allProducts.filter(function (p) { return p.status === currentFilter; });
+    var list = allProducts.filter(function (p) { return resolveStatusByDate(p) === currentFilter; });
     list = list.slice().sort(function (a, b) {
       var da = a.startDate || '';
       var db = b.startDate || '';
