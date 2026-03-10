@@ -106,6 +106,25 @@
     return list.find(function (item) { return item.id === id; }) || null;
   }
 
+  function removeFromLocal(id) {
+    if (!id) return;
+    if (!confirm('確定要從本機移除此筆？試算表不會被刪除，僅移除本機列表中的這一筆。')) return;
+    var list = loadExisting();
+    var idx = list.findIndex(function (item) { return item.id === id; });
+    if (idx < 0) {
+      showMessage('找不到該筆資料。', 'error');
+      return;
+    }
+    list.splice(idx, 1);
+    saveExisting(list);
+    var editingIdEl = document.getElementById('editingId');
+    if (editingIdEl && editingIdEl.value === id) {
+      editingIdEl.value = '';
+    }
+    renderExistingList();
+    showMessage('已從本機移除該筆。', 'success');
+  }
+
   function renderExistingList() {
     var box = document.getElementById('existingListBox');
     var clearBtn = document.getElementById('clearEditBtn');
@@ -126,12 +145,15 @@
         '</div>' +
         '<div class="existing-item-actions">' +
           '<button type="button" class="btn btn-secondary existing-load-btn" data-id="' + escapeHtml(item.id) + '">載入編輯</button>' +
+          '<button type="button" class="btn btn-remove existing-remove-btn" data-id="' + escapeHtml(item.id) + '">從本機移除</button>' +
         '</div>';
       box.appendChild(div);
     });
-    list.forEach(function (item, i) {
-      var btn = box.querySelector('.existing-load-btn[data-id="' + item.id + '"]');
-      if (btn) btn.addEventListener('click', function () { loadItemIntoForm(item.id); });
+    list.forEach(function (item) {
+      var loadBtn = box.querySelector('.existing-load-btn[data-id="' + item.id + '"]');
+      if (loadBtn) loadBtn.addEventListener('click', function () { loadItemIntoForm(item.id); });
+      var removeBtn = box.querySelector('.existing-remove-btn[data-id="' + item.id + '"]');
+      if (removeBtn) removeBtn.addEventListener('click', function () { removeFromLocal(item.id); });
     });
     if (clearBtn) clearBtn.style.display = editingId ? 'inline-block' : 'none';
   }
@@ -198,25 +220,58 @@
   }
 
   function loadFromSheet() {
+    try {
+      var btn = document.getElementById('loadFromSheetBtn');
+      var resetBtn = function () {
+        if (btn) { btn.disabled = false; btn.textContent = '從試算表載入列表（取得列號以支援同步更新）'; }
+      };
+      showMessage('正在從試算表載入…', 'success');
+    } catch (err) {
+      if (typeof console !== 'undefined' && console.error) console.error(err);
+      showMessage('載入時發生錯誤：' + (err && err.message ? err.message : String(err)), 'error');
+      return;
+    }
     var url = (document.getElementById('scriptUrl') || {}).value || getScriptUrl();
     if (!url || !url.trim()) {
-      showMessage('請先填寫下方 Google Apps Script 網址。', 'error');
+      showMessage('請先填寫下方「Apps Script 網址」後再按此按鈕。', 'error');
       return;
     }
     url = url.trim().replace(/\/$/, '');
-    var btn = document.getElementById('loadFromSheetBtn');
     if (btn) { btn.disabled = true; btn.textContent = '載入中…'; }
-    fetch(url)
-      .then(function (res) { return res.json(); })
-      .then(function (list) {
-        if (btn) { btn.disabled = false; btn.textContent = '從試算表載入列表（取得列號以支援同步更新）'; }
-        if (!Array.isArray(list) || list.length === 0) {
-          showMessage('試算表目前沒有資料，或回傳格式不符。', 'success');
+    fetch(url, { method: 'GET', mode: 'cors' })
+      .then(function (res) {
+        if (!res.ok) {
+          throw new Error('伺服器回傳 ' + res.status + '，請確認 Apps Script 網址與試算表 ID 是否正確。');
+        }
+        return res.text();
+      })
+      .then(function (text) {
+        var list;
+        try {
+          list = JSON.parse(text);
+        } catch (e) {
+          throw new Error('試算表回傳內容不是 JSON，請確認網址為「網路應用程式」的網址。');
+        }
+        if (!Array.isArray(list)) {
+          if (list && list.error) {
+            throw new Error('試算表回報：' + (list.error || '未知錯誤'));
+          }
+          throw new Error('試算表目前沒有資料或回傳格式不符。');
+        }
+        if (list.length === 0) {
+          resetBtn();
+          showMessage('試算表目前沒有資料（至少需有一列標題與一列資料）。', 'success');
           return;
         }
+        function normalizeDateForMatch(val) {
+          if (val == null || val === '') return '';
+          var s = String(val).trim();
+          var part = s.indexOf('T') >= 0 ? s.split('T')[0] : s;
+          return part.replace(/\//g, '-');
+        }
         var existing = loadExisting();
-        var byId = {};
-        existing.forEach(function (item) { byId[item.id] = item; });
+        var updated = 0;
+        var added = 0;
         list.forEach(function (row) {
           var id = row.id;
           var sheetRowIndex = null;
@@ -237,20 +292,42 @@
             countdownTo: row.countdownTo || null,
             sheetRowIndex: sheetRowIndex
           };
-          var idx = existing.findIndex(function (item) { return item.id === id; });
-          if (idx >= 0) {
-            existing[idx] = Object.assign({}, existing[idx], payload);
-          } else {
-            existing.push(payload);
+          var idxById = existing.findIndex(function (item) { return item.id === id; });
+          if (idxById >= 0) {
+            existing[idxById] = Object.assign({}, existing[idxById], payload);
+            updated++;
+            return;
           }
+          var sheetStart = normalizeDateForMatch(row.startDate);
+          var idxByTitleStart = existing.findIndex(function (item) {
+            if (String(item.title || '').trim() !== String(row.title || '').trim()) return false;
+            return normalizeDateForMatch(item.startDate) === sheetStart;
+          });
+          if (idxByTitleStart >= 0) {
+            existing[idxByTitleStart] = Object.assign({}, existing[idxByTitleStart], payload);
+            updated++;
+            return;
+          }
+          existing.push(payload);
+          added++;
         });
         saveExisting(existing);
         renderExistingList();
-        showMessage('已從試算表載入 ' + list.length + ' 筆，並記錄列號。之後載入編輯並送出即可同步更新試算表。', 'success');
+        resetBtn();
+        var msg = '已從試算表載入 ' + list.length + ' 筆';
+        if (updated > 0 || added > 0) {
+          msg += '（更新 ' + updated + ' 筆、新增 ' + added + ' 筆）';
+        }
+        msg += '，並記錄列號。之後載入編輯並送出即可同步更新試算表。';
+        showMessage(msg, 'success');
       })
       .catch(function (err) {
-        if (btn) { btn.disabled = false; btn.textContent = '從試算表載入列表（取得列號以支援同步更新）'; }
-        showMessage('無法連線至試算表：' + (err && err.message ? err.message : '請檢查網址與網路'), 'error');
+        resetBtn();
+        var msg = (err && err.message) ? err.message : '請檢查網址與網路';
+        if (String(msg).indexOf('Failed to fetch') !== -1 || String(msg).indexOf('NetworkError') !== -1) {
+          msg = '無法連線（可能是 CORS 或網路問題）。若用 file:// 開啟請改由本機伺服器或 GitHub Pages 開啟後台。';
+        }
+        showMessage(msg, 'error');
       });
   }
 
@@ -446,9 +523,15 @@
     clearEditMode();
   });
 
-  var loadFromSheetBtn = document.getElementById('loadFromSheetBtn');
-  if (loadFromSheetBtn) {
-    loadFromSheetBtn.addEventListener('click', function () { loadFromSheet(); });
+  // 用事件委派綁定「從試算表載入」按鈕，避免因載入順序導致沒反應
+  var existingListSection = document.getElementById('existingListSection');
+  if (existingListSection) {
+    existingListSection.addEventListener('click', function (e) {
+      if (e.target && e.target.id === 'loadFromSheetBtn') {
+        e.preventDefault();
+        loadFromSheet();
+      }
+    });
   }
 
   var scriptInput = document.getElementById('scriptUrl');
@@ -499,4 +582,6 @@
   }
 
   renderExistingList();
+
+  window.loadFromSheet = loadFromSheet;
 })();
