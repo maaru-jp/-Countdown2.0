@@ -1,40 +1,35 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '1aUzAPcHtrsxufOSumJPdWgiOUZLkPi2BHQadofrmdxg';
+const SPREADSHEET_ID = '你的試算表ID';
 
 // 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
-// 規則 1：即將開團 + 有開團日 → 開團日當天 0:00（UTC）起視為「正在開團中」
-// 規則 2：正在開團中 + 有結團日 → 結團日 23:59:59（UTC）過後視為「已結團」
+// 以「日期」為準：開團日前 → 即將開團；開團日～結團日 → 正在開團；結團日後 → 已結團（不受試算表內儲存的狀態影響）
 function resolveStatusForApi(sheetStatus, startDate, endDate) {
-  var s = String(sheetStatus || '').trim();
   var now = new Date();
 
-  if (s === 'upcoming' || s === '即將開團') {
-    if (startDate !== undefined && startDate !== null && startDate !== '') {
-      var start = new Date(startDate);
-      if (!isNaN(start.getTime())) {
-        var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
-        var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
-        if (now >= startMidnight) return 'ongoing';
-      }
+  if (startDate !== undefined && startDate !== null && String(startDate).trim() !== '') {
+    var start = new Date(startDate);
+    if (!isNaN(start.getTime())) {
+      var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
+      var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
+      if (now < startMidnight) return 'upcoming';
     }
-    return s || 'upcoming';
   }
 
-  if (s === 'ongoing' || s === '正在開團中') {
-    if (endDate !== undefined && endDate !== null && endDate !== '') {
-      var end = new Date(endDate);
-      if (!isNaN(end.getTime())) {
-        var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
-        var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
-        if (now > endOfDay) return 'ended';
-      }
+  if (endDate !== undefined && endDate !== null && String(endDate).trim() !== '') {
+    var end = new Date(endDate);
+    if (!isNaN(end.getTime())) {
+      var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
+      var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
+      if (now > endOfDay) return 'ended';
     }
-    return s || 'ongoing';
   }
 
-  return s || 'ongoing';
+  var s = String(sheetStatus || '').trim();
+  if (s === 'upcoming' || s === '即將開團') return 'upcoming';
+  if (s === 'ended' || s === '已結團') return 'ended';
+  return 'ongoing';
 }
 
 // 只解析「表單格式」action=val&key=val，絕不把這類字串送進 JSON.parse
@@ -223,4 +218,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
