@@ -76,6 +76,8 @@
   let allProducts = [];
   let currentFilter = 'upcoming';
   let currentTheme = 'dawn';
+  let currentPage = 1;
+  const PER_PAGE = 9;
 
   function loadData() {
     try {
@@ -177,16 +179,24 @@
   function renderCards() {
     const grid = document.getElementById('cardsGrid');
     const empty = document.getElementById('emptyState');
+    const paginationWrap = document.getElementById('paginationWrap');
     if (!grid || !empty) return;
 
-    const list = getFiltered();
+    const fullList = getFiltered();
+    const totalPages = Math.max(1, Math.ceil(fullList.length / PER_PAGE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PER_PAGE;
+    const list = fullList.slice(start, start + PER_PAGE);
+
     grid.innerHTML = '';
 
-    if (list.length === 0) {
+    if (fullList.length === 0) {
       empty.hidden = false;
+      if (paginationWrap) { paginationWrap.innerHTML = ''; paginationWrap.hidden = true; }
       return;
     }
     empty.hidden = true;
+    if (paginationWrap) paginationWrap.hidden = false;
 
     list.forEach(function (p) {
       const card = document.createElement('article');
@@ -243,6 +253,31 @@
 
       grid.appendChild(card);
     });
+
+    if (paginationWrap && fullList.length > PER_PAGE) {
+      var nav = document.createElement('div');
+      nav.className = 'pagination';
+      var parts = [];
+      for (var i = 1; i <= totalPages; i++) {
+        var isCurrent = i === currentPage;
+        parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">第' + i + '</button>');
+      }
+      nav.innerHTML = parts.join('');
+      paginationWrap.innerHTML = '';
+      paginationWrap.appendChild(nav);
+      nav.querySelectorAll('.pagination-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var page = parseInt(this.dataset.page, 10);
+          if (page === currentPage) return;
+          currentPage = page;
+          renderCards();
+          grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    } else if (paginationWrap) {
+      paginationWrap.innerHTML = '';
+      paginationWrap.hidden = true;
+    }
   }
 
   function escapeHtml(s) {
@@ -258,6 +293,7 @@
         const filter = this.dataset.filter;
         if (filter === currentFilter) return;
         currentFilter = filter;
+        currentPage = 1;
         document.querySelectorAll('.tab').forEach(function (b) {
           b.classList.toggle('active', b.dataset.filter === filter);
           b.setAttribute('aria-selected', b.dataset.filter === filter ? 'true' : 'false');
