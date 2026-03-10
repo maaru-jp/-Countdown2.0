@@ -254,17 +254,18 @@
       grid.appendChild(card);
     });
 
-    if (paginationWrap && fullList.length > PER_PAGE) {
+    if (paginationWrap && fullList.length > 0) {
       var nav = document.createElement('div');
       nav.className = 'pagination';
       var parts = [];
       for (var i = 1; i <= totalPages; i++) {
         var isCurrent = i === currentPage;
-        parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">第' + i + '</button>');
+        parts.push('<button type="button" class="pagination-btn' + (isCurrent ? ' active' : '') + '" data-page="' + i + '" aria-current="' + (isCurrent ? 'true' : 'false') + '" aria-label="第' + i + '頁">' + i + '</button>');
       }
       nav.innerHTML = parts.join('');
       paginationWrap.innerHTML = '';
       paginationWrap.appendChild(nav);
+      paginationWrap.hidden = false;
       nav.querySelectorAll('.pagination-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var page = parseInt(this.dataset.page, 10);
@@ -386,10 +387,12 @@
     }
     bindTabs();
     bindTheme();
+    renderCards();
+    tickCountdown();
+    setInterval(tickCountdown, 1000);
     maybeFetchFromSheet(function () {
       renderCards();
       tickCountdown();
-      setInterval(tickCountdown, 1000);
     });
   }
 
