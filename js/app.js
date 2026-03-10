@@ -100,11 +100,12 @@
 
   // 各分類內依「開團日」由新到舊排列（最新在上）
   // 開團日「中午 12:00」起才移到正在開團；結團日後為已結團
+  // 支援日期格式 2026-03-05 或 2026/03/05（試算表可能存成斜線）
   function parseLocalDateOnly(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
     var s = dateStr.trim();
     var datePart = s.indexOf('T') >= 0 ? s.split('T')[0] : s;
-    var parts = datePart.split('-');
+    var parts = datePart.split(/[-/]/);
     if (parts.length < 3) return null;
     var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
     if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
