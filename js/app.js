@@ -99,26 +99,34 @@
   }
 
   // 各分類內依「開團日」由新到舊排列（最新在上）
-  // 依開團日、結團日與現在時間決定顯示狀態（與後端邏輯一致，採 UTC 日期）
+  // 開團日「中午 12:00」起才移到正在開團；結團日後為已結團
+  function parseLocalDateOnly(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return null;
+    var s = dateStr.trim();
+    var datePart = s.indexOf('T') >= 0 ? s.split('T')[0] : s;
+    var parts = datePart.split('-');
+    if (parts.length < 3) return null;
+    var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+    return { year: y, month: m, date: d, value: y * 10000 + m * 100 + d };
+  }
   function resolveStatusByDate(p) {
     var now = new Date();
+    var todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
+    var todayValue = todayY * 10000 + todayM * 100 + todayD;
+
     var startDate = p.startDate ? String(p.startDate).trim() : '';
     var endDate = p.endDate ? String(p.endDate).trim() : '';
     if (startDate !== '') {
-      var start = startDate.indexOf('T') >= 0 ? new Date(startDate) : new Date(startDate + 'T00:00:00Z');
-      if (!isNaN(start.getTime())) {
-        var ys = start.getUTCFullYear(), ms = start.getUTCMonth(), ds = start.getUTCDate();
-        var startMidnight = new Date(Date.UTC(ys, ms, ds, 0, 0, 0, 0));
-        if (now < startMidnight) return 'upcoming';
+      var start = parseLocalDateOnly(startDate);
+      if (start) {
+        var startNoon = new Date(start.year, start.month, start.date, 12, 0, 0, 0);
+        if (now < startNoon) return 'upcoming';
       }
     }
     if (endDate !== '') {
-      var end = endDate.indexOf('T') >= 0 ? new Date(endDate) : new Date(endDate + 'T23:59:59.999Z');
-      if (!isNaN(end.getTime())) {
-        var ye = end.getUTCFullYear(), me = end.getUTCMonth(), de = end.getUTCDate();
-        var endOfDay = new Date(Date.UTC(ye, me, de, 23, 59, 59, 999));
-        if (now > endOfDay) return 'ended';
-      }
+      var end = parseLocalDateOnly(endDate);
+      if (end && todayValue > end.value) return 'ended';
     }
     return p.status === 'ended' ? 'ended' : (p.status === 'upcoming' ? 'upcoming' : 'ongoing');
   }
