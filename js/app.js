@@ -202,6 +202,11 @@
       const card = document.createElement('article');
       card.className = 'product-card';
       card.dataset.id = p.id;
+      if (p.expectedShipDate != null && String(p.expectedShipDate).trim() !== '') {
+        card.dataset.expectedShipDate = String(p.expectedShipDate).trim();
+      } else {
+        card.dataset.expectedShipDate = '';
+      }
 
       const badgeClass = (p.badge === 'new' ? 'new' : p.badge === 'hot' ? 'hot' : 'recommend');
       const badgeText = p.badge === 'new' ? '新品' : p.badge === 'hot' ? '熱銷' : '推薦';
@@ -238,17 +243,20 @@
             countdownParts.push('<div class="countdown countdown-done" data-countdown-type="end">已結團</div>');
           }
         }
-        var shipTarget = getShipCountdownTarget(p);
-        if (shipTarget) {
-          var cdShip = getCountdown(shipTarget);
-          if (cdShip && !cdShip.done) {
-            countdownParts.push('<div class="countdown" data-countdown-type="ship">預計出貨倒數：<span>' + cdShip.text + '</span></div>');
-          } else if (cdShip && cdShip.done) {
-            countdownParts.push('<div class="countdown countdown-done" data-countdown-type="ship">已過預計出貨日</div>');
-          }
-        }
       } else {
         countdownParts.push('<div class="countdown countdown-done">已結團</div>');
+      }
+      // 不論即將開團／正在開團／已結團，只要有預計出貨日就顯示出貨倒數（已結團後尤其需要顯示）
+      var shipTarget = getShipCountdownTarget(p);
+      if (shipTarget) {
+        var cdShip = getCountdown(shipTarget);
+        var isEnded = (statusForCountdown === 'ended');
+        var shipLabel = isEnded ? '出貨倒數' : '預計出貨倒數';
+        if (cdShip && !cdShip.done) {
+          countdownParts.push('<div class="countdown" data-countdown-type="ship">' + shipLabel + '：<span>' + cdShip.text + '</span></div>');
+        } else if (cdShip && cdShip.done) {
+          countdownParts.push('<div class="countdown countdown-done" data-countdown-type="ship">已過預計出貨日</div>');
+        }
       }
       var countdownHtml = countdownParts.join('');
 
@@ -377,8 +385,19 @@
   }
 
   function getShipCountdownTarget(p) {
-    if (!p || !p.expectedShipDate) return null;
-    var base = p.expectedShipDate.indexOf('T') >= 0 ? p.expectedShipDate : p.expectedShipDate + 'T23:59:59';
+    if (!p) return null;
+    var raw = p.expectedShipDate;
+    if (raw === undefined || raw === null || String(raw).trim() === '') return null;
+    raw = String(raw).trim();
+    var base = raw.indexOf('T') >= 0 ? raw : (raw.indexOf('-') >= 0 ? raw + 'T23:59:59' : null);
+    if (base === null && /^\d+$/.test(raw)) {
+      var serial = parseInt(raw, 10);
+      if (!isNaN(serial)) {
+        var d0 = new Date((serial - 25569) * 86400 * 1000);
+        if (!isNaN(d0.getTime())) base = d0.getFullYear() + '-' + String(d0.getMonth() + 1).padStart(2, '0') + '-' + String(d0.getDate()).padStart(2, '0') + 'T23:59:59';
+      }
+    }
+    if (!base) return null;
     var d = new Date(base);
     if (isNaN(d.getTime())) return null;
     var delay = parseInt(p.shipDelayDays, 10);
