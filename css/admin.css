@@ -81,10 +81,15 @@
 }
 .existing-item-actions {
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
 }
 .existing-item-actions .btn {
   padding: 0.4rem 0.75rem;
   font-size: 0.85rem;
+  white-space: nowrap;
 }
 .existing-item-actions .btn-remove {
   background: rgba(239, 68, 68, 0.12);
