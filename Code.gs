@@ -1,7 +1,7 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '1aUzAPcHtrsxufOSumJPdWgiOUZLkPi2BHQadofrmdxg';
+const SPREADSHEET_ID = '你的試算表ID';
 
 // 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
 // 開團日「中午 12:00（UTC）」起為正在開團；之前為即將開團；結團日後為已結團
@@ -206,6 +206,12 @@ function doGet(e) {
         if (rawShip != null && rawShip !== '') {
           if (typeof rawShip === 'object' && rawShip.getTime) {
             expectedShipDate = rawShip.toISOString ? rawShip.toISOString().split('T')[0] : String(rawShip).trim();
+          } else if (typeof rawShip === 'number') {
+            var shipD = new Date((rawShip - 25569) * 86400 * 1000);
+            if (!isNaN(shipD.getTime())) {
+              var sm = shipD.getMonth() + 1, sd = shipD.getDate();
+              expectedShipDate = shipD.getFullYear() + '-' + (sm < 10 ? '0' : '') + sm + '-' + (sd < 10 ? '0' : '') + sd;
+            }
           } else {
             expectedShipDate = String(rawShip).trim() || null;
           }
@@ -221,6 +227,12 @@ function doGet(e) {
         if (rawShip != null && rawShip !== '') {
           if (typeof rawShip === 'object' && rawShip.getTime) {
             expectedShipDate = rawShip.toISOString ? rawShip.toISOString().split('T')[0] : String(rawShip).trim();
+          } else if (typeof rawShip === 'number') {
+            var shipD2 = new Date((rawShip - 25569) * 86400 * 1000);
+            if (!isNaN(shipD2.getTime())) {
+              var sm2 = shipD2.getMonth() + 1, sd2 = shipD2.getDate();
+              expectedShipDate = shipD2.getFullYear() + '-' + (sm2 < 10 ? '0' : '') + sm2 + '-' + (sd2 < 10 ? '0' : '') + sd2;
+            }
           } else {
             expectedShipDate = String(rawShip).trim() || null;
           }
@@ -256,4 +268,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
