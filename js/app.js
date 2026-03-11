@@ -216,14 +216,41 @@
         }).join('') + '</div>';
       }
 
-      var countdownTarget = p.countdownTo || (p.endDate ? p.endDate + 'T23:59:59' : null);
-      let countdownHtml = '';
-      const cd = getCountdown(countdownTarget);
-      if (cd && !cd.done) {
-        countdownHtml = '<div class="countdown">倒數：<span>' + cd.text + '</span></div>';
-      } else if (cd && cd.done) {
-        countdownHtml = '<div class="countdown">已到期</div>';
+      var statusForCountdown = resolveStatusByDate(p);
+      var countdownParts = [];
+      if (statusForCountdown === 'upcoming') {
+        var startTarget = p.countdownTo || (p.startDate ? p.startDate + 'T12:00:00' : null);
+        if (startTarget) {
+          var cdStart = getCountdown(startTarget);
+          if (cdStart && !cdStart.done) {
+            countdownParts.push('<div class="countdown" data-countdown-type="start">開團倒數：<span>' + cdStart.text + '</span></div>');
+          } else if (cdStart && cdStart.done) {
+            countdownParts.push('<div class="countdown countdown-done" data-countdown-type="start">開團已到</div>');
+          }
+        }
+      } else if (statusForCountdown === 'ongoing') {
+        var endTarget = p.endDate ? p.endDate + 'T23:59:59' : null;
+        if (endTarget) {
+          var cdEnd = getCountdown(endTarget);
+          if (cdEnd && !cdEnd.done) {
+            countdownParts.push('<div class="countdown" data-countdown-type="end">結團倒數：<span>' + cdEnd.text + '</span></div>');
+          } else if (cdEnd && cdEnd.done) {
+            countdownParts.push('<div class="countdown countdown-done" data-countdown-type="end">已結團</div>');
+          }
+        }
+        var shipTarget = getShipCountdownTarget(p);
+        if (shipTarget) {
+          var cdShip = getCountdown(shipTarget);
+          if (cdShip && !cdShip.done) {
+            countdownParts.push('<div class="countdown" data-countdown-type="ship">預計出貨倒數：<span>' + cdShip.text + '</span></div>');
+          } else if (cdShip && cdShip.done) {
+            countdownParts.push('<div class="countdown countdown-done" data-countdown-type="ship">已過預計出貨日</div>');
+          }
+        }
+      } else {
+        countdownParts.push('<div class="countdown countdown-done">已結團</div>');
       }
+      var countdownHtml = countdownParts.join('');
 
       var imageHtml = '';
       if (p.imageUrl && p.imageUrl.trim()) {
@@ -349,20 +376,43 @@
     });
   }
 
+  function getShipCountdownTarget(p) {
+    if (!p || !p.expectedShipDate) return null;
+    var base = p.expectedShipDate.indexOf('T') >= 0 ? p.expectedShipDate : p.expectedShipDate + 'T23:59:59';
+    var d = new Date(base);
+    if (isNaN(d.getTime())) return null;
+    var delay = parseInt(p.shipDelayDays, 10);
+    if (!isNaN(delay) && delay > 0) d.setDate(d.getDate() + delay);
+    var y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+    return y + '-' + m + '-' + day + 'T23:59:59';
+  }
+
+  function getCountdownTargetByType(p, type) {
+    if (!p) return null;
+    if (type === 'start') return p.countdownTo || (p.startDate ? p.startDate + 'T12:00:00' : null);
+    if (type === 'end') return p.endDate ? p.endDate + 'T23:59:59' : null;
+    if (type === 'ship') return getShipCountdownTarget(p);
+    return null;
+  }
+
   function tickCountdown() {
-    document.querySelectorAll('.countdown').forEach(function (div) {
+    document.querySelectorAll('.countdown[data-countdown-type]').forEach(function (div) {
       const span = div.querySelector('span');
       if (!span) return;
       const card = div.closest('.product-card');
       if (!card) return;
       const id = card.dataset.id;
+      const type = div.dataset.countdownType;
       const p = allProducts.find(function (x) { return String(x.id) === id; });
-      var countdownTarget = p ? (p.countdownTo || (p.endDate ? p.endDate + 'T23:59:59' : null)) : null;
+      var countdownTarget = p ? getCountdownTargetByType(p, type) : null;
       if (!p || !countdownTarget) return;
       const cd = getCountdown(countdownTarget);
       if (!cd) return;
       if (cd.done) {
-        div.innerHTML = '已到期';
+        if (type === 'start') div.innerHTML = '開團已到';
+        else if (type === 'end') div.innerHTML = '已結團';
+        else if (type === 'ship') div.innerHTML = '已過預計出貨日';
+        else div.innerHTML = '已到期';
         div.classList.add('countdown-done');
         return;
       }

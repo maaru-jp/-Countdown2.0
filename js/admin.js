@@ -50,6 +50,9 @@
     var registeredCount = rawCount === '' ? null : Math.max(0, parseInt(rawCount, 10) || 0);
     var countdownTo = form.countdownTo.value ? form.countdownTo.value.replace('T', 'T') : null;
     if (countdownTo && countdownTo.length === 16) countdownTo = countdownTo + ':00';
+    var expectedShipDate = (form.expectedShipDate && form.expectedShipDate.value) ? form.expectedShipDate.value.trim() : null;
+    var rawDelay = (form.shipDelayDays && form.shipDelayDays.value) ? form.shipDelayDays.value.trim() : '';
+    var shipDelayDays = rawDelay === '' ? null : Math.max(0, parseInt(rawDelay, 10) || 0);
 
     var progressNames = ['收單中', '等待出荷', '集運中', '抵台', '已完成出貨'];
     var progress = [];
@@ -67,7 +70,9 @@
       status: status,
       registeredCount: registeredCount,
       progress: progress,
-      countdownTo: countdownTo || null
+      countdownTo: countdownTo || null,
+      expectedShipDate: expectedShipDate || null,
+      shipDelayDays: shipDelayDays
     };
   }
 
@@ -82,7 +87,9 @@
       endDate: data.endDate,
       registeredCount: data.registeredCount != null ? data.registeredCount : null,
       progress: data.progress,
-      countdownTo: data.countdownTo
+      countdownTo: data.countdownTo,
+      expectedShipDate: data.expectedShipDate || null,
+      shipDelayDays: data.shipDelayDays != null ? data.shipDelayDays : null
     };
   }
 
@@ -149,11 +156,11 @@
         '</div>';
       box.appendChild(div);
     });
-    list.forEach(function (item) {
+    var removeBtns = box.querySelectorAll('.existing-remove-btn');
+    list.forEach(function (item, i) {
       var loadBtn = box.querySelector('.existing-load-btn[data-id="' + item.id + '"]');
       if (loadBtn) loadBtn.addEventListener('click', function () { loadItemIntoForm(item.id); });
-      var removeBtn = box.querySelector('.existing-remove-btn[data-id="' + item.id + '"]');
-      if (removeBtn) removeBtn.addEventListener('click', function () { removeFromLocal(item.id); });
+      if (removeBtns[i]) removeBtns[i].addEventListener('click', function () { removeFromLocal(item.id); });
     });
     if (clearBtn) clearBtn.style.display = editingId ? 'inline-block' : 'none';
   }
@@ -206,6 +213,8 @@
     } else {
       form.countdownTo.value = '';
     }
+    if (form.expectedShipDate) form.expectedShipDate.value = item.expectedShipDate || '';
+    if (form.shipDelayDays) form.shipDelayDays.value = (item.shipDelayDays != null && item.shipDelayDays !== '') ? String(item.shipDelayDays) : '';
     var editingIdEl = document.getElementById('editingId');
     if (editingIdEl) editingIdEl.value = id;
     renderExistingList();
@@ -290,6 +299,8 @@
             status: row.status || 'ongoing',
             progress: Array.isArray(row.progress) ? row.progress : [],
             countdownTo: row.countdownTo || null,
+            expectedShipDate: row.expectedShipDate || null,
+            shipDelayDays: row.shipDelayDays != null ? row.shipDelayDays : null,
             sheetRowIndex: sheetRowIndex
           };
           var idxById = existing.findIndex(function (item) { return item.id === id; });
@@ -374,6 +385,8 @@
     params.append('status', payload.status || 'ongoing');
     params.append('progress', JSON.stringify(payload.progress || []));
     params.append('countdownTo', payload.countdownTo || '');
+    params.append('expectedShipDate', payload.expectedShipDate || '');
+    params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -423,6 +436,8 @@
     params.append('status', payload.status || 'ongoing');
     params.append('progress', JSON.stringify(payload.progress || []));
     params.append('countdownTo', payload.countdownTo || '');
+    params.append('expectedShipDate', payload.expectedShipDate || '');
+    params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
