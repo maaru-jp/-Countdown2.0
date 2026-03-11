@@ -1,7 +1,7 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '1aUzAPcHtrsxufOSumJPdWgiOUZLkPi2BHQadofrmdxg';
+const SPREADSHEET_ID = '你的試算表ID';
 
 // 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
 // 開團日「中午 12:00（UTC）」起為正在開團；之前為即將開團；結團日後為已結團
@@ -83,6 +83,8 @@ function doPost(e) {
         p.status || '',
         progressStr,
         p.countdownTo || '',
+        p.expectedShipDate || '',
+        p.shipDelayDays !== undefined && p.shipDelayDays !== null && p.shipDelayDays !== '' ? String(p.shipDelayDays) : '',
         new Date().toISOString()
       ];
       var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -106,6 +108,8 @@ function doPost(e) {
         p.status || '',
         progressStr,
         p.countdownTo || '',
+        p.expectedShipDate || '',
+        p.shipDelayDays !== undefined && p.shipDelayDays !== null && p.shipDelayDays !== '' ? String(p.shipDelayDays) : '',
         new Date().toISOString()
       ];
       var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -122,7 +126,9 @@ function doPost(e) {
         var values = [
           row.title || '', row.imageUrl || '', row.badge || '', row.startDate || '', row.endDate || '',
           row.registeredCount !== undefined && row.registeredCount !== null ? String(row.registeredCount) : '',
-          row.status || '', progressStr, row.countdownTo || '', new Date().toISOString()
+          row.status || '', progressStr, row.countdownTo || '', row.expectedShipDate || '',
+          row.shipDelayDays !== undefined && row.shipDelayDays !== null && row.shipDelayDays !== '' ? String(row.shipDelayDays) : '',
+          new Date().toISOString()
         ];
         var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
         sheet.appendRow(values);
@@ -139,7 +145,9 @@ function doPost(e) {
           var values = [
             row.title || '', row.imageUrl || '', row.badge || '', row.startDate || '', row.endDate || '',
             row.registeredCount !== undefined && row.registeredCount !== null ? String(row.registeredCount) : '',
-            row.status || '', progressStr, row.countdownTo || '', new Date().toISOString()
+            row.status || '', progressStr, row.countdownTo || '', row.expectedShipDate || '',
+            row.shipDelayDays !== undefined && row.shipDelayDays !== null && row.shipDelayDays !== '' ? String(row.shipDelayDays) : '',
+            new Date().toISOString()
           ];
           var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
           sheet.appendRow(values);
@@ -190,7 +198,35 @@ function doGet(e) {
           countdownTo = String(rawCountdown).trim() || null;
         }
       }
+      var expectedShipDate = null;
+      var shipDelayDays = null;
       var rawListedAt = row[9];
+      if (row.length > 11) {
+        var rawShip = row[9];
+        if (rawShip != null && rawShip !== '') {
+          if (typeof rawShip === 'object' && rawShip.getTime) {
+            expectedShipDate = rawShip.toISOString ? rawShip.toISOString().split('T')[0] : String(rawShip).trim();
+          } else {
+            expectedShipDate = String(rawShip).trim() || null;
+          }
+        }
+        var rawDelay = row[10];
+        if (rawDelay !== undefined && rawDelay !== null && rawDelay !== '') {
+          shipDelayDays = parseInt(String(rawDelay).trim(), 10);
+          if (isNaN(shipDelayDays)) shipDelayDays = null;
+        }
+        rawListedAt = row[11];
+      } else if (row.length > 10) {
+        var rawShip = row[9];
+        if (rawShip != null && rawShip !== '') {
+          if (typeof rawShip === 'object' && rawShip.getTime) {
+            expectedShipDate = rawShip.toISOString ? rawShip.toISOString().split('T')[0] : String(rawShip).trim();
+          } else {
+            expectedShipDate = String(rawShip).trim() || null;
+          }
+        }
+        rawListedAt = row[10];
+      }
       var listedAt = null;
       if (rawListedAt != null && rawListedAt !== '') {
         if (typeof rawListedAt === 'object' && rawListedAt.getTime) {
@@ -210,6 +246,8 @@ function doGet(e) {
         status: status,
         progress: progress,
         countdownTo: countdownTo,
+        expectedShipDate: expectedShipDate,
+        shipDelayDays: shipDelayDays,
         listedAt: listedAt
       };
     });
@@ -218,4 +256,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
