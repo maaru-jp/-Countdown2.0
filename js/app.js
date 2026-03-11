@@ -102,7 +102,7 @@
 
   // 各分類內依「開團日」由新到舊排列（最新在上）
   // 開團日「中午 12:00」起才移到正在開團；結團日後為已結團
-  // 支援日期格式 2026-03-05 或 2026/03/05（試算表可能存成斜線）
+  // 支援日期格式 2026-03-05 或 2026/03/05（試算表可能存成斜線或 Excel 數字）
   function parseLocalDateOnly(dateStr) {
     if (!dateStr || typeof dateStr !== 'string') return null;
     var s = dateStr.trim();
@@ -112,6 +112,23 @@
     var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
     if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
     return { year: y, month: m, date: d, value: y * 10000 + m * 100 + d };
+  }
+  /** 將欄位值轉成 YYYY-MM-DD（支援字串 -/ 與 Excel 序列數字），供倒數目標用 */
+  function toDateOnlyString(val) {
+    if (val === undefined || val === null) return null;
+    if (typeof val === 'number') {
+      var d = new Date((val - 25569) * 86400 * 1000);
+      if (isNaN(d.getTime())) return null;
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    var s = String(val).trim();
+    if (!s) return null;
+    var datePart = s.indexOf('T') >= 0 ? s.split('T')[0] : s;
+    var parts = datePart.split(/[-/]/);
+    if (parts.length < 3) return null;
+    var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10), d = parseInt(parts[2], 10);
+    if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+    return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
   function resolveStatusByDate(p) {
     var now = new Date();
@@ -224,7 +241,8 @@
       var statusForCountdown = resolveStatusByDate(p);
       var countdownParts = [];
       if (statusForCountdown === 'upcoming') {
-        var startTarget = p.countdownTo || (p.startDate ? p.startDate + 'T12:00:00' : null);
+        var startDateStr = toDateOnlyString(p.startDate);
+        var startTarget = p.countdownTo || (startDateStr ? startDateStr + 'T12:00:00' : null);
         if (startTarget) {
           var cdStart = getCountdown(startTarget);
           if (cdStart && !cdStart.done) {
@@ -234,7 +252,8 @@
           }
         }
       } else if (statusForCountdown === 'ongoing') {
-        var endTarget = p.endDate ? p.endDate + 'T23:59:59' : null;
+        var endDateStr = toDateOnlyString(p.endDate);
+        var endTarget = endDateStr ? endDateStr + 'T23:59:59' : null;
         if (endTarget) {
           var cdEnd = getCountdown(endTarget);
           if (cdEnd && !cdEnd.done) {
@@ -408,8 +427,14 @@
 
   function getCountdownTargetByType(p, type) {
     if (!p) return null;
-    if (type === 'start') return p.countdownTo || (p.startDate ? p.startDate + 'T12:00:00' : null);
-    if (type === 'end') return p.endDate ? p.endDate + 'T23:59:59' : null;
+    if (type === 'start') {
+      var startStr = toDateOnlyString(p.startDate);
+      return p.countdownTo || (startStr ? startStr + 'T12:00:00' : null);
+    }
+    if (type === 'end') {
+      var endStr = toDateOnlyString(p.endDate);
+      return endStr ? endStr + 'T23:59:59' : null;
+    }
     if (type === 'ship') return getShipCountdownTarget(p);
     return null;
   }
