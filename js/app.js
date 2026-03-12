@@ -271,7 +271,7 @@
         if (endTarget) {
           var cdEnd = getCountdown(endTarget);
           if (cdEnd && !cdEnd.done) {
-            countdownParts.push('<div class="countdown" data-countdown-type="end">距離結團時間還有多久：<span>' + cdEnd.text + '</span></div>');
+            countdownParts.push('<div class="countdown" data-countdown-type="end">結團時間：<span>' + cdEnd.text + '</span></div>');
           } else if (cdEnd && cdEnd.done) {
             countdownParts.push('<div class="countdown countdown-done" data-countdown-type="end">已結團</div>');
           }
