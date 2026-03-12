@@ -130,18 +130,23 @@
     if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
     return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
-  /** 取得「開團時刻」：有填倒數目標時間則以該時刻為準，否則為開團日中午 12:00 */
+  /** 取得「開團時刻」：開團日已過則一律視為已開團；否則有填倒數目標時間則以該時刻為準，沒填則為開團日中午 12:00 */
   function getOpeningMoment(p) {
+    var startStr = toDateOnlyString(p.startDate);
+    if (!startStr) return null;
+    var start = parseLocalDateOnly(startStr);
+    if (!start) return null;
+    var startNoon = new Date(start.year, start.month, start.date, 12, 0, 0, 0);
+    var now = new Date();
+    var todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
+    var todayValue = todayY * 10000 + todayM * 100 + todayD;
+    if (todayValue > start.value) return startNoon;
     var ct = p.countdownTo;
     if (ct != null && String(ct).trim() !== '') {
       var d = new Date(ct);
       if (!isNaN(d.getTime())) return d;
     }
-    var startStr = toDateOnlyString(p.startDate);
-    if (!startStr) return null;
-    var start = parseLocalDateOnly(startStr);
-    if (!start) return null;
-    return new Date(start.year, start.month, start.date, 12, 0, 0, 0);
+    return startNoon;
   }
 
   function resolveStatusByDate(p) {
@@ -266,7 +271,7 @@
         if (endTarget) {
           var cdEnd = getCountdown(endTarget);
           if (cdEnd && !cdEnd.done) {
-            countdownParts.push('<div class="countdown" data-countdown-type="end">結團倒數：<span>' + cdEnd.text + '</span></div>');
+            countdownParts.push('<div class="countdown" data-countdown-type="end">距離結團時間還有多久：<span>' + cdEnd.text + '</span></div>');
           } else if (cdEnd && cdEnd.done) {
             countdownParts.push('<div class="countdown countdown-done" data-countdown-type="end">已結團</div>');
           }
