@@ -68,6 +68,16 @@
       </div>
 
       <div class="form-row">
+        <label>預計多久後開團（臨時開團用）</label>
+        <p class="hint">點選後會自動填入「開團日期」為今天，並將「倒數目標時間」設為對應時刻；之後仍可手動修改。</p>
+        <div class="quick-open-btns" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.25rem;">
+          <button type="button" class="btn btn-secondary btn-sm" data-minutes="30">30 分鐘後</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-minutes="60">1 小時後</button>
+          <button type="button" class="btn btn-secondary btn-sm" data-minutes="120">2 小時後</button>
+        </div>
+      </div>
+
+      <div class="form-row">
         <label>狀態</label>
         <div class="radio-group">
           <label class="radio-label"><input type="radio" name="status" value="upcoming" /> 即將開團</label>
@@ -93,7 +103,7 @@
       </div>
 
       <div class="form-row">
-        <label for="countdownTo">倒數目標時間（選填，用於開團倒數；不填則以開團日中午 12:00 為準）</label>
+        <label for="countdownTo">倒數目標時間（選填，用於開團倒數與「何時移到正在開團」；不填則以開團日中午 12:00 為準；臨時開團可搭配上方「預計多久後開團」）</label>
         <input type="datetime-local" id="countdownTo" name="countdownTo" />
       </div>
 
