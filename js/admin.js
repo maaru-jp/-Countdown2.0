@@ -538,6 +538,29 @@
     clearEditMode();
   });
 
+  (function () {
+    var form = document.getElementById('groupForm');
+    if (!form) return;
+    form.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest && e.target.closest('button');
+      if (!btn || !btn.closest('.quick-open-btns') || !btn.dataset.minutes) return;
+      var minutes = parseInt(btn.dataset.minutes, 10);
+      if (isNaN(minutes) || minutes < 0) return;
+      var now = new Date();
+      var openAt = new Date(now.getTime() + minutes * 60 * 1000);
+      var y = openAt.getFullYear();
+      var m = String(openAt.getMonth() + 1).padStart(2, '0');
+      var d = String(openAt.getDate()).padStart(2, '0');
+      var h = String(openAt.getHours()).padStart(2, '0');
+      var min = String(openAt.getMinutes()).padStart(2, '0');
+      var startDateEl = form.startDate;
+      var countdownToEl = form.countdownTo;
+      if (startDateEl) startDateEl.value = y + '-' + m + '-' + d;
+      if (countdownToEl) countdownToEl.value = y + '-' + m + '-' + d + 'T' + h + ':' + min;
+      showMessage('已設定開團日期為今天、倒數目標時間為 ' + minutes + ' 分鐘後，可再修改其他欄位後送出。', 'success');
+    });
+  })();
+
   // 用事件委派綁定「從試算表載入」按鈕，避免因載入順序導致沒反應
   var existingListSection = document.getElementById('existingListSection');
   if (existingListSection) {

@@ -130,22 +130,31 @@
     if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
     return y + '-' + String(m).padStart(2, '0') + '-' + String(d).padStart(2, '0');
   }
+  /** 取得「開團時刻」：有填倒數目標時間則以該時刻為準，否則為開團日中午 12:00 */
+  function getOpeningMoment(p) {
+    var ct = p.countdownTo;
+    if (ct != null && String(ct).trim() !== '') {
+      var d = new Date(ct);
+      if (!isNaN(d.getTime())) return d;
+    }
+    var startStr = toDateOnlyString(p.startDate);
+    if (!startStr) return null;
+    var start = parseLocalDateOnly(startStr);
+    if (!start) return null;
+    return new Date(start.year, start.month, start.date, 12, 0, 0, 0);
+  }
+
   function resolveStatusByDate(p) {
     var now = new Date();
     var todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
     var todayValue = todayY * 10000 + todayM * 100 + todayD;
 
-    var startDate = p.startDate ? String(p.startDate).trim() : '';
-    var endDate = p.endDate ? String(p.endDate).trim() : '';
-    if (startDate !== '') {
-      var start = parseLocalDateOnly(startDate);
-      if (start) {
-        var startNoon = new Date(start.year, start.month, start.date, 12, 0, 0, 0);
-        if (now < startNoon) return 'upcoming';
-      }
-    }
-    if (endDate !== '') {
-      var end = parseLocalDateOnly(endDate);
+    var openingMoment = getOpeningMoment(p);
+    if (openingMoment && now < openingMoment) return 'upcoming';
+
+    var endDateStr = toDateOnlyString(p.endDate);
+    if (endDateStr) {
+      var end = parseLocalDateOnly(endDateStr);
       if (end && todayValue > end.value) return 'ended';
     }
     return p.status === 'ended' ? 'ended' : (p.status === 'upcoming' ? 'upcoming' : 'ongoing');
@@ -511,6 +520,7 @@
     renderCards();
     tickCountdown();
     setInterval(tickCountdown, 1000);
+    setInterval(renderCards, 10 * 1000);
     maybeFetchFromSheet(function () {
       renderCards();
       tickCountdown();
