@@ -239,8 +239,8 @@
         card.dataset.expectedShipDate = '';
       }
 
-      const badgeClass = (p.badge === 'new' ? 'new' : p.badge === 'hot' ? 'hot' : 'recommend');
-      const badgeText = p.badge === 'new' ? '新品' : p.badge === 'hot' ? '熱銷' : '推薦';
+      const badgeClass = (p.badge === 'new' ? 'new' : p.badge === 'hot' ? 'hot' : p.badge === 'ichibansho' ? 'ichibansho' : 'recommend');
+      const badgeText = (p.badge === 'new' ? '新品' : p.badge === 'hot' ? '熱銷' : p.badge === 'ichibansho' ? '一番賞' : '推薦');
 
       let progressHtml = '';
       if (p.progress && p.progress.length) {
@@ -494,16 +494,26 @@
       if (cb) cb();
       return;
     }
-    fetch(url + (url.indexOf('?') >= 0 ? '&' : '?') + 'action=get')
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
+    var mainUrl = url + sep + 'action=get';
+    var ichibanshoUrl = url + sep + 'action=get&sheet=ichibansho';
+    fetch(mainUrl)
       .then(function (r) { return r.json(); })
-      .then(function (data) {
-        if (Array.isArray(data) && data.length) {
-          allProducts = data;
-          saveData();
-        }
-        if (cb) cb();
+      .then(function (data1) {
+        var main = Array.isArray(data1) ? data1 : [];
+        return fetch(ichibanshoUrl)
+          .then(function (r) { return r.json(); })
+          .then(function (data2) { return Array.isArray(data2) ? data2 : []; })
+          .catch(function () { return []; })
+          .then(function (ichibansho) {
+            allProducts = main.concat(ichibansho);
+            if (allProducts.length) saveData();
+            if (cb) cb();
+          });
       })
-      .catch(function () { if (cb) cb(); });
+      .catch(function () {
+        if (cb) cb();
+      });
   }
 
   function init() {

@@ -61,7 +61,10 @@
       progress.push({ name: name, done: el ? el.checked : false });
     });
 
+    var sheet = (badge === 'ichibansho') ? 'ichibansho' : null;
+
     return {
+      sheet: sheet,
       title: title,
       imageUrl: imageUrl || null,
       startDate: startDate,
@@ -79,6 +82,7 @@
   function buildPayload(data, id) {
     return {
       id: id,
+      sheet: data.sheet || null,
       title: data.title,
       imageUrl: data.imageUrl || null,
       status: data.status,
@@ -182,7 +186,7 @@
     form.title.value = item.title || '';
     form.imageUrl.value = item.imageUrl || '';
     if (form.imageUrl && !form.imageUrl.value && item.imageUrl) form.imageUrl.value = item.imageUrl;
-    var badge = (item.badge === 'new' || item.badge === 'recommend') ? item.badge : 'hot';
+    var badge = (item.badge === 'new' || item.badge === 'recommend' || item.badge === 'ichibansho') ? item.badge : 'hot';
     var badgeEl = form.querySelector('input[name="badge"][value="' + badge + '"]');
     if (badgeEl) badgeEl.checked = true;
     form.startDate.value = item.startDate || '';
@@ -387,6 +391,7 @@
     params.append('countdownTo', payload.countdownTo || '');
     params.append('expectedShipDate', payload.expectedShipDate || '');
     params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
+    if (payload.sheet === 'ichibansho') params.append('sheet', 'ichibansho');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -438,6 +443,7 @@
     params.append('countdownTo', payload.countdownTo || '');
     params.append('expectedShipDate', payload.expectedShipDate || '');
     params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
+    if (payload.sheet === 'ichibansho') params.append('sheet', 'ichibansho');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
