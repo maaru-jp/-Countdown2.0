@@ -61,10 +61,8 @@
       progress.push({ name: name, done: el ? el.checked : false });
     });
 
-    var sheet = (badge === 'ichibansho') ? 'ichibansho' : null;
-
+    // 一番賞僅為標籤，一律寫入原本的試算表（第一張）
     return {
-      sheet: sheet,
       title: title,
       imageUrl: imageUrl || null,
       startDate: startDate,
@@ -391,7 +389,6 @@
     params.append('countdownTo', payload.countdownTo || '');
     params.append('expectedShipDate', payload.expectedShipDate || '');
     params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
-    if (payload.sheet === 'ichibansho') params.append('sheet', 'ichibansho');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -443,7 +440,6 @@
     params.append('countdownTo', payload.countdownTo || '');
     params.append('expectedShipDate', payload.expectedShipDate || '');
     params.append('shipDelayDays', payload.shipDelayDays != null ? String(payload.shipDelayDays) : '');
-    if (payload.sheet === 'ichibansho') params.append('sheet', 'ichibansho');
     fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },

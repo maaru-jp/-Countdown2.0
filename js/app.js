@@ -496,20 +496,12 @@
     }
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     var mainUrl = url + sep + 'action=get';
-    var ichibanshoUrl = url + sep + 'action=get&sheet=ichibansho';
     fetch(mainUrl)
       .then(function (r) { return r.json(); })
       .then(function (data1) {
-        var main = Array.isArray(data1) ? data1 : [];
-        return fetch(ichibanshoUrl)
-          .then(function (r) { return r.json(); })
-          .then(function (data2) { return Array.isArray(data2) ? data2 : []; })
-          .catch(function () { return []; })
-          .then(function (ichibansho) {
-            allProducts = main.concat(ichibansho);
-            if (allProducts.length) saveData();
-            if (cb) cb();
-          });
+        allProducts = Array.isArray(data1) ? data1 : [];
+        if (allProducts.length) saveData();
+        if (cb) cb();
       })
       .catch(function () {
         if (cb) cb();
