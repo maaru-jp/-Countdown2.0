@@ -1,7 +1,7 @@
 // 複製此檔案內容到 Google Apps Script 編輯器，並將 SPREADSHEET_ID 改為你的試算表 ID
 // 詳見 GoogleAppsScript.md
 
-const SPREADSHEET_ID = '1aUzAPcHtrsxufOSumJPdWgiOUZLkPi2BHQadofrmdxg';
+const SPREADSHEET_ID = '你的試算表ID';
 
 // 依開團日、結團日與現在時間，決定回傳給前台的 status（試算表不改寫，僅覆寫 API 回傳）
 // 開團日「中午 12:00（UTC）」起為正在開團；之前為即將開團；結團日後為已結團
@@ -89,12 +89,15 @@ function doPost(e) {
       ];
       var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
       var sheet = ss.getSheets()[0];
+      if (!sheet) {
+        return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '找不到試算表工作表' })).setMimeType(ContentService.MimeType.JSON);
+      }
       var lastRow = sheet.getLastRow();
       if (rowIndex > lastRow) {
         return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '該列不存在' })).setMimeType(ContentService.MimeType.JSON);
       }
       sheet.getRange(rowIndex, 1, rowIndex, values.length).setValues([values]);
-      return ContentService.createTextOutput(JSON.stringify({ ok: true, message: '已更新試算表第 ' + rowIndex + ' 列' })).setMimeType(ContentService.MimeType.JSON);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true, message: '已更新試算表「' + sheet.getName() + '」第 ' + rowIndex + ' 列' })).setMimeType(ContentService.MimeType.JSON);
     }
     if (String(p.action) === 'append') {
       var progressStr = p.progress || '[]';
@@ -114,6 +117,9 @@ function doPost(e) {
       ];
       var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
       var sheet = ss.getSheets()[0];
+      if (!sheet) {
+        return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '找不到試算表工作表' })).setMimeType(ContentService.MimeType.JSON);
+      }
       sheet.appendRow(values);
       var rows = sheet.getLastRow();
       return ContentService.createTextOutput(JSON.stringify({ ok: true, sheetName: sheet.getName(), rows: rows, message: '已寫入試算表「' + sheet.getName() + '」，目前共 ' + rows + ' 列（含標題）' })).setMimeType(ContentService.MimeType.JSON);
@@ -130,7 +136,11 @@ function doPost(e) {
           row.shipDelayDays !== undefined && row.shipDelayDays !== null && row.shipDelayDays !== '' ? String(row.shipDelayDays) : '',
           new Date().toISOString()
         ];
-        var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
+        var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+        var sheet = ss.getSheets()[0];
+        if (!sheet) {
+          return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '找不到試算表工作表' })).setMimeType(ContentService.MimeType.JSON);
+        }
         sheet.appendRow(values);
         return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
       }
@@ -149,7 +159,11 @@ function doPost(e) {
             row.shipDelayDays !== undefined && row.shipDelayDays !== null && row.shipDelayDays !== '' ? String(row.shipDelayDays) : '',
             new Date().toISOString()
           ];
-          var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
+          var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+          var sheet = ss.getSheets()[0];
+          if (!sheet) {
+            return ContentService.createTextOutput(JSON.stringify({ ok: false, error: '找不到試算表工作表' })).setMimeType(ContentService.MimeType.JSON);
+          }
           sheet.appendRow(values);
           return ContentService.createTextOutput(JSON.stringify({ ok: true })).setMimeType(ContentService.MimeType.JSON);
         }
@@ -174,7 +188,11 @@ function doGet(e) {
       var rows = sheet.getLastRow() || 0;
       return ContentService.createTextOutput(JSON.stringify({ ok: true, message: 'Apps Script 連線正常', sheetName: sheet.getName(), rows: rows })).setMimeType(ContentService.MimeType.JSON);
     }
-    var sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheets()[0];
+    var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    var sheet = ss.getSheets()[0];
+    if (!sheet) {
+      return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+    }
     var data = sheet.getDataRange().getValues();
     if (data.length < 2) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
     var headers = data[0];
@@ -269,4 +287,3 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
   }
 }
-
