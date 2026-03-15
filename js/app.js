@@ -162,7 +162,8 @@
       var end = parseLocalDateOnly(endDateStr);
       if (end && todayValue > end.value) return 'ended';
     }
-    return p.status === 'ended' ? 'ended' : (p.status === 'upcoming' ? 'upcoming' : 'ongoing');
+    // 開團時刻已過且未結團 → 一律視為正在開團（臨時開團時間到會自動移入）
+    return 'ongoing';
   }
 
   function getFiltered() {
@@ -527,7 +528,7 @@
     renderCards();
     tickCountdown();
     setInterval(tickCountdown, 1000);
-    setInterval(renderCards, 10 * 1000);
+    setInterval(renderCards, 3 * 1000);
     maybeFetchFromSheet(function () {
       renderCards();
       tickCountdown();
