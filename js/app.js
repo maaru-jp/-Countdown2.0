@@ -528,7 +528,8 @@
     renderCards();
     tickCountdown();
     setInterval(tickCountdown, 1000);
-    setInterval(renderCards, 3 * 1000);
+    // 狀態重算與列表重繪：15 秒一次，減少手機閃動感
+    setInterval(renderCards, 15 * 1000);
     maybeFetchFromSheet(function () {
       renderCards();
       tickCountdown();
