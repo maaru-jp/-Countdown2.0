@@ -116,12 +116,6 @@
   /** 將欄位值轉成 YYYY-MM-DD（支援字串 -/ 與 Excel 序列數字），供倒數目標用 */
   function toDateOnlyString(val) {
     if (val === undefined || val === null) return null;
-    // Google 試算表讀回來常見是 Date 物件；先直接處理，避免 String(Date) 解析失敗
-    if (typeof val === 'object' && val && typeof val.getTime === 'function') {
-      var dt = val instanceof Date ? val : new Date(val);
-      if (!dt || isNaN(dt.getTime())) return null;
-      return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
-    }
     if (typeof val === 'number') {
       var d = new Date((val - 25569) * 86400 * 1000);
       if (isNaN(d.getTime())) return null;
@@ -138,23 +132,22 @@
   }
   /** 取得「開團時刻」：開團日已過則一律視為已開團；否則有填倒數目標時間則以該時刻為準，沒填則為開團日中午 12:00 */
   function getOpeningMoment(p) {
-    var ct = p.countdownTo;
-    if (ct != null && String(ct).trim() !== '') {
-      var ctStr = String(ct).trim();
-      // 支援「YYYY-MM-DDTHH:mm」未帶秒的情況（後台可能寫入/試算表可能省略 :ss）
-      if (ctStr.length === 16 && ctStr.indexOf('T') > 0 && ctStr.indexOf(':') > 0 && ctStr.charAt(15) !== ':') {
-        ctStr = ctStr + ':00';
-      }
-      var d = new Date(ctStr);
-      if (!isNaN(d.getTime())) return d;
-    }
-
     // 沒有 countdownTo 時，才用 startDate 的中午 12:00 當作開團時刻
     var startStr = toDateOnlyString(p.startDate);
     if (!startStr) return null;
     var start = parseLocalDateOnly(startStr);
     if (!start) return null;
     var startNoon = new Date(start.year, start.month, start.date, 12, 0, 0, 0);
+    var now = new Date();
+    var todayY = now.getFullYear(), todayM = now.getMonth(), todayD = now.getDate();
+    var todayValue = todayY * 10000 + todayM * 100 + todayD;
+    if (todayValue > start.value) return startNoon;
+
+    var ct = p.countdownTo;
+    if (ct != null && String(ct).trim() !== '') {
+      var d = new Date(ct);
+      if (!isNaN(d.getTime())) return d;
+    }
     return startNoon;
   }
 
@@ -171,8 +164,7 @@
       var end = parseLocalDateOnly(endDateStr);
       if (end && todayValue > end.value) return 'ended';
     }
-    // 開團時刻已過且未結團 → 一律視為正在開團（臨時開團時間到會自動移入）
-    return 'ongoing';
+    return p.status === 'ended' ? 'ended' : (p.status === 'upcoming' ? 'upcoming' : 'ongoing');
   }
 
   function getFiltered() {

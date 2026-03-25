@@ -50,14 +50,6 @@
     var registeredCount = rawCount === '' ? null : Math.max(0, parseInt(rawCount, 10) || 0);
     var countdownTo = form.countdownTo.value ? form.countdownTo.value.replace('T', 'T') : null;
     if (countdownTo && countdownTo.length === 16) countdownTo = countdownTo + ':00';
-    // countdownTo 由 datetime-local 送出時不含時區資訊；轉成 toISOString()（帶 Z）
-    // 可避免試算表/Apps Script 時區不同導致「時間點提早/延後」切換。
-    if (countdownTo) {
-      try {
-        var cd = new Date(countdownTo); // 視為使用者本機時間
-        if (!isNaN(cd.getTime())) countdownTo = cd.toISOString();
-      } catch (_) {}
-    }
     var expectedShipDate = (form.expectedShipDate && form.expectedShipDate.value) ? form.expectedShipDate.value.trim() : null;
     var rawDelay = (form.shipDelayDays && form.shipDelayDays.value) ? form.shipDelayDays.value.trim() : '';
     var shipDelayDays = rawDelay === '' ? null : Math.max(0, parseInt(rawDelay, 10) || 0);
